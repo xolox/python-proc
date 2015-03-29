@@ -1,0 +1,7 @@
+*.egg-info
+*.pyc
+.coverage
+.tox/
+build/
+dist/*.tar.gz
+htmlcov/

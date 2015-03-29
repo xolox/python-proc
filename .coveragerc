@@ -1,0 +1,11 @@
+# .coveragerc: Configuration file for coverage.py.
+# http://nedbatchelder.com/code/coverage/
+
+[run]
+source = proc
+omit = proc/tests.py
+
+[report]
+exclude_lines = assert False
+
+# vim: ft=dosini
