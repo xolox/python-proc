@@ -52,7 +52,6 @@ def setUpModule():
     """
     # Initialize verbose logging to the terminal.
     coloredlogs.install()
-    coloredlogs.increase_verbosity()
 
 
 class ProcTestCase(unittest.TestCase):
@@ -60,6 +59,10 @@ class ProcTestCase(unittest.TestCase):
     """
     :py:mod:`unittest` compatible container for the test suite of `proc`.
     """
+
+    def setUp(self):
+        """Reset the logging level before every test runs."""
+        coloredlogs.set_level(logging.DEBUG)
 
     def test_process_from_path(self):
         """Test the :py:func:`proc.core.Process.from_path()` constructor."""
