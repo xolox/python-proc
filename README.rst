@@ -94,6 +94,25 @@ with the world.
 This means that, although I made my first commit on the `proc` package in March
 2015, much of its code has existed for years in various forms.
 
+Similar projects
+----------------
+
+Below are several other Python libraries that expose process information. If
+the `proc` package isn't working out for you consider trying one of these. The
+summaries are copied and/or paraphrased from the documentation of each
+package:
+
+psutil_
+  A cross-platform library for retrieving information on running processes and
+  system utilization (CPU, memory, disks, network) in Python.
+
+procpy_
+  A Python wrapper for the procps_ library and a module containing higher level
+  classes (with some extensions compared to procps_).
+
+procfs_
+  Python API for the Linux ``/proc`` virtual filesystem.
+
 Contact
 -------
 
@@ -118,6 +137,8 @@ This software is licensed under the `MIT license`_.
 .. _peter@peterodding.com: peter@peterodding.com
 .. _process information pseudo-file system: http://linux.die.net/man/5/proc
 .. _procfs: https://pypi.python.org/pypi/procfs
+.. _procps: http://procps.sourceforge.net/
+.. _procpy: http://code.google.com/p/procpy/
 .. _psutil: https://pypi.python.org/pypi/psutil/
 .. _PyPI: https://pypi.python.org/pypi/proc
 .. _Read the Docs: https://proc.readthedocs.org
