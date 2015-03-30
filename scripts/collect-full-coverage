@@ -1,0 +1,25 @@
+#!/bin/bash -e
+
+# This shell script is used by .travis.yml and the makefile to run the proc
+# test suite twice (once as a regular user and once with root privileges) in
+# order to get the maximum test coverage:
+#
+#  - The proc.core.Process.exe_path and proc.core.Process.exe_name fall back
+#    methods are only required for regular users because with root privileges
+#    proc.core.Process.exe is always available.
+#
+#  - The proc.apache module requires root privileges to identify WSGI workers,
+#    again because of the proc.core.Process.exe property.
+
+# First we run the test suite as a regular user.
+coverage run setup.py test
+
+# Then we run the test suite with root privileges.
+sudo $(which coverage) run setup.py test
+
+# Combine the coverage data files.
+coverage combine
+
+# Report the coverage statistics to the terminal
+# and fail if the coverage drops below 90%.
+coverage report --fail-under=90

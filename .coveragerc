@@ -4,6 +4,7 @@
 [run]
 source = proc
 omit = proc/tests.py
+parallel = True
 
 [report]
 exclude_lines = assert False

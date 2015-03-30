@@ -1,7 +1,7 @@
 # Makefile for proc.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 29, 2015
+# Last Change: March 30, 2015
 # URL: https://github.com/xolox/python-proc
 
 WORKON_HOME ?= $(HOME)/.virtualenvs
@@ -36,7 +36,7 @@ reset:
 check: install
 	test -x "$(VIRTUAL_ENV)/bin/pep8" || ($(ACTIVATE) && pip-accel install pep8)
 	test -x "$(VIRTUAL_ENV)/bin/pep257" || ($(ACTIVATE) && pip-accel install pep257)
-	$(ACTIVATE) && pep8 --max-line-length=120 setup.py docs/conf.py proc
+	$(ACTIVATE) && pep8 --ignore=E402 --max-line-length=120 setup.py docs/conf.py proc
 	$(ACTIVATE) && pep257 --ignore=D200 setup.py docs/conf.py proc
 
 pytest: install
@@ -53,6 +53,14 @@ coverage: install
 	$(ACTIVATE) && coverage html
 	$(ACTIVATE) && coverage report --fail-under=90
 
+# The following makefile target isn't documented on purpose, I don't want
+# people to execute this without them knowing very well what they're doing.
+
+full-coverage: install
+	test -x "$(VIRTUAL_ENV)/bin/coverage" || ($(ACTIVATE) && pip-accel install coverage)
+	$(ACTIVATE) && scripts/collect-full-coverage
+	$(ACTIVATE) && coverage html
+
 docs: install
 	test -x "$(VIRTUAL_ENV)/bin/sphinx-build" || ($(ACTIVATE) && pip-accel install sphinx)
 	$(ACTIVATE) && cd docs && sphinx-build -b html -d build/doctrees . build/html
@@ -66,4 +74,4 @@ clean:
 	find -depth -type d -name __pycache__ -exec rm -Rf {} \;
 	find -type f -name '*.pyc' -delete
 
-.PHONY: default install reset pytest tox coverage docs publish clean
+.PHONY: default install reset pytest tox coverage full-coverage docs publish clean

@@ -142,9 +142,9 @@ class ProcessNode(Process):
         :returns: A generator of :py:class:`ProcessNode` objects.
         """
         for process in (self.descendants if recursive else self.children):
-            if ((pid is None or process.pid == pid)
-                    and (exe_name is None or process.exe_name == exe_name)
-                    and (exe_path is None or process.exe_path == exe_path)):
+            if ((pid is None or process.pid == pid) and
+                    (exe_name is None or process.exe_name == exe_name) and
+                    (exe_path is None or process.exe_path == exe_path)):
                 yield process
 
 

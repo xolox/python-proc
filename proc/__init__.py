@@ -13,4 +13,4 @@ The top level :py:mod:`proc` module contains only a version number.
 """
 
 # Semi-standard module versioning.
-__version__ = '0.1.1'
+__version__ = '0.2'

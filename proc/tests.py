@@ -19,6 +19,7 @@ dependencies.
 # Standard library modules.
 import logging
 import multiprocessing
+import operator
 import os
 import random
 import subprocess
@@ -32,6 +33,7 @@ import coloredlogs
 from executor import which
 from humanfriendly import parse_size, Timer
 from pprint import pformat
+from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import find_processes, num_race_conditions, Process
 from proc.cron import cron_graceful, wait_for_processes
 from proc.tree import get_process_tree
@@ -74,7 +76,6 @@ class ProcTestCase(unittest.TestCase):
         assert process.pgrp == os.getpgrp(), "Unexpected process group ID!"
         # The following tests are based on common sense, here's hoping they
         # don't bite me in the ass later on :-).
-        assert which(process.comm), "Process executable name non available on $PATH?!"
         assert process.state == 'R', "Unexpected process state!"
         assert process.runtime < 600, "Test process running for >= 10 minutes?!"
         assert process.rss > parse_size('10 MB'), "Resident set size (RSS) less than 10 MB?!"
@@ -312,6 +313,39 @@ class ProcTestCase(unittest.TestCase):
         finally:
             shutdown_event.set()
             manager.join()
+
+    def test_stats_list(self):
+        """Test the :py:class:`proc.apache.StatsList` class."""
+        # Test argument validation.
+        self.assertRaises(ValueError, operator.attrgetter('average'), StatsList())
+        self.assertRaises(ValueError, operator.attrgetter('median'), StatsList())
+        # Test the actual calculations (specifically average and median).
+        sample = StatsList([0, 1, 1, 2, 3, 5, 8, 13, 21, 34])
+        assert sample.min == 0
+        assert sample.max == 34
+        assert sample.average == 8.8
+        assert sample.median == 4
+        # Also test the if block in the median property (the above tests the else block).
+        assert StatsList([0, 1, 1, 2, 3, 5, 8, 13, 21]).median == 3
+
+    def test_apache_worker_monitoring(self):
+        """Test the :py:mod:`proc.apache` module."""
+        if not os.path.exists('/etc/apache2/sites-enabled/proc-test-vhost'):
+            self.skipTest("Apache worker monitoring test disabled except on Travis CI!")
+        else:
+            worker_rss, wsgi_rss = find_apache_memory_usage()
+            # Make sure some regular Apache workers were identified.
+            assert len(worker_rss) > 0, "No regular Apache workers found?!"
+            assert worker_rss.average > 0
+            # Make sure at least one group of WSGI workers was identified. The
+            # identification of WSGI workers requires root privileges, so
+            # without that there's no point in running the test (we know it
+            # will fail).
+            if not os.getuid() == 0:
+                self.skipTest("Apache WSGI worker monitoring test requires root privileges!")
+            else:
+                assert 'proc-test' in wsgi_rss
+                assert wsgi_rss['proc-test'].average > 0
 
 
 def executable(pathname):
