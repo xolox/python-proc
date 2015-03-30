@@ -162,10 +162,13 @@ class Process(object):
                                ('ppid', True),
                                ('pgrp', False),
                                ('session', False),
+                               ('starttime', False),
                                ('vsize', False),
                                ('rss', False),
                                ('cmdline', True),
-                               ('exe', True)):
+                               ('exe', True),
+                               ('exe_path', True),
+                               ('exe_name', False)):
             value = getattr(self, name)
             if not (optional and not value):
                 fields.append("%s=%r" % (name, value))

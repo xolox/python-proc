@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter.odding@paylogic.com>
-# Last Change: March 29, 2015
+# Last Change: March 30, 2015
 # URL: https://py2deb.readthedocs.org
 
 """
@@ -193,11 +193,11 @@ class ProcTestCase(unittest.TestCase):
             # Locate our own process in the tree.
             self = init.find(pid=os.getpid(), recursive=True)
             # Verify that the child is visible in the process tree.
-            logger.debug("Children in process tree: %s", [c.pid for c in self.children])
+            logger.debug("Children in process tree: %s", list(self.children))
             assert child.pid in [c.pid for c in self.children], \
                 "Child process not visible in process tree reported by get_process_tree()!"
             # Verify that the grandchild is visible in the process tree.
-            logger.debug("Grandchildren in process tree: %s", [(gc.pid, gc.exe_name) for gc in self.grandchildren])
+            logger.debug("Grandchildren in process tree: %s", list(self.grandchildren))
             assert any(gc.exe_name == 'sleep' for gc in self.grandchildren), \
                 "Grandchild process not visible in process tree reported by get_process_tree()!"
         finally:
