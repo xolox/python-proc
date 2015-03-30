@@ -183,23 +183,47 @@ class ProcTestCase(unittest.TestCase):
             assert any(which(p.exe_name) for p in candidates), \
                 "Fall back method of Process.exe_name reported executable base name not available on $PATH?!"
 
-    def test_tree_construction(self):
+    def test_tree_construction(self, timeout=60):
         """Test the functionality of the :py:mod:`proc.tree` module."""
         # Spawn a child and grandchild (because of shell=True) that will live for a minute.
         child = subprocess.Popen(['sleep 60'], shell=True)
+        # Use a try / finally block to make sure we kill our child before returning.
         try:
-            # Construct a process tree.
-            init = get_process_tree()
-            # Locate our own process in the tree.
-            self = init.find(pid=os.getpid(), recursive=True)
-            # Verify that the child is visible in the process tree.
-            logger.debug("Children in process tree: %s", list(self.children))
-            assert child.pid in [c.pid for c in self.children], \
-                "Child process not visible in process tree reported by get_process_tree()!"
-            # Verify that the grandchild is visible in the process tree.
-            logger.debug("Grandchildren in process tree: %s", list(self.grandchildren))
-            assert any(gc.exe_name == 'sleep' for gc in self.grandchildren), \
-                "Grandchild process not visible in process tree reported by get_process_tree()!"
+            # This test used to fail intermittently on Travis CI because the child
+            # and grandchild need a moment to initialize and the test wasn't giving
+            # the two processes the time they needed to initialize. However any
+            # given time.sleep(N) value is completely arbitrary (if a computer can
+            # be slow it can also be really slow :-) so instead I've decided to
+            # repeat the test until it succeeds, with a timeout in case it actually
+            # does fail and won't succeed despite waiting.
+            timer = Timer()
+            while True:
+                # Use a try / except block (in a while loop) to retry as long
+                # as the timeout hasn't been hit and bubble the exception when
+                # once we hit the timeout.
+                try:
+                    # Construct a process tree.
+                    init = get_process_tree()
+                    # Locate our own process in the tree.
+                    self = init.find(pid=os.getpid(), recursive=True)
+                    # Verify that the child is visible in the process tree.
+                    logger.debug("Children in process tree: %s", list(self.children))
+                    assert child.pid in [c.pid for c in self.children], \
+                        "Child process not visible in process tree reported by get_process_tree()!"
+                    # Verify that the grandchild is visible in the process tree.
+                    logger.debug("Grandchildren in process tree: %s", list(self.grandchildren))
+                    assert any(gc.exe_name == 'sleep' for gc in self.grandchildren), \
+                        "Grandchild process not visible in process tree reported by get_process_tree()!"
+                    # Once both assertions have succeeded the test has also
+                    # succeeded and we return (break out of the while loop).
+                    return
+                except AssertionError:
+                    if timer.elapsed_time >= timeout:
+                        # Stop swallowing assertions once we hit the timeout.
+                        raise
+                    else:
+                        # Don't burn CPU cycles too much.
+                        time.sleep(0.1)
         finally:
             # Make sure we always kill our child.
             child.terminate()
