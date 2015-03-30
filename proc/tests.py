@@ -175,20 +175,22 @@ class ProcTestCase(unittest.TestCase):
         candidates = [p for p in find_processes() if p.exe_path and not p.exe]
         logger.debug("Candidates for Process.exe_path fall back test:\n%s", pformat(candidates))
         if not candidates:
-            self.skipTest("No processes available on which Process.exe_path fall back can be tested!")
-        else:
-            assert executable(candidates[0].exe_path), \
-                "Fall back method of Process.exe_path reported invalid executable pathname!"
+            raise unittest.SkipTest("No processes available on which Process.exe_path fall back can be tested!")
+        assert executable(candidates[0].exe_path), \
+            "Fall back method of Process.exe_path reported invalid executable pathname!"
 
     def test_exe_name_fallback(self):
         """Test the fall back method of :py:attr:`proc.core.Process.exe_name`."""
+        if os.getuid() == 0:
+            # Given root privileges all /proc/[pid]/exe symbolic links can be
+            # successfully resolved so we can't test the fall back method.
+            raise unittest.SkipTest("Fall back method of Process.exe_name is useless with root privileges!")
         candidates = [p for p in find_processes() if p.exe_name and not p.exe_path]
         logger.debug("Candidates for Process.exe_name fall back test:\n %s", pformat(candidates))
         if not candidates:
-            self.skipTest("No processes available on which Process.exe_name fall back can be tested!")
-        else:
-            assert any(which(p.exe_name) for p in candidates), \
-                "Fall back method of Process.exe_name reported executable base name not available on $PATH?!"
+            raise unittest.SkipTest("No processes available on which Process.exe_name fall back can be tested!")
+        assert any(which(p.exe_name) for p in candidates), \
+            "Fall back method of Process.exe_name reported executable base name not available on $PATH?!"
 
     def test_tree_construction(self, timeout=60):
         """Test the functionality of the :py:mod:`proc.tree` module."""
@@ -331,21 +333,19 @@ class ProcTestCase(unittest.TestCase):
     def test_apache_worker_monitoring(self):
         """Test the :py:mod:`proc.apache` module."""
         if not os.path.exists('/etc/apache2/sites-enabled/proc-test-vhost'):
-            self.skipTest("Apache worker monitoring test disabled except on Travis CI!")
-        else:
-            worker_rss, wsgi_rss = find_apache_memory_usage()
-            # Make sure some regular Apache workers were identified.
-            assert len(worker_rss) > 0, "No regular Apache workers found?!"
-            assert worker_rss.average > 0
-            # Make sure at least one group of WSGI workers was identified. The
-            # identification of WSGI workers requires root privileges, so
-            # without that there's no point in running the test (we know it
-            # will fail).
-            if not os.getuid() == 0:
-                self.skipTest("Apache WSGI worker monitoring test requires root privileges!")
-            else:
-                assert 'proc-test' in wsgi_rss
-                assert wsgi_rss['proc-test'].average > 0
+            raise unittest.SkipTest("Apache worker monitoring test disabled except on Travis CI!")
+        worker_rss, wsgi_rss = find_apache_memory_usage()
+        # Make sure some regular Apache workers were identified.
+        assert len(worker_rss) > 0, "No regular Apache workers found?!"
+        assert worker_rss.average > 0
+        # Make sure at least one group of WSGI workers was identified. The
+        # identification of WSGI workers requires root privileges, so
+        # without that there's no point in running the test (we know it
+        # will fail).
+        if not os.getuid() == 0:
+            raise unittest.SkipTest("Apache WSGI worker monitoring test requires root privileges!")
+        assert 'proc-test' in wsgi_rss
+        assert wsgi_rss['proc-test'].average > 0
 
 
 def executable(pathname):
