@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 29, 2015
+# Last Change: March 30, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -595,11 +595,12 @@ def find_processes(obj_type=Process):
     """
     Scan the numerical subdirectories of ``/proc`` for process information.
 
-    :param obj_type: The type of process information objects to construct
-                     (expected to be :py:class:`Process` or a subclass of
-                     :py:class:`Process`).
+    :param obj_type: The type of process objects to construct (expected to be
+                     :py:class:`Process` or a subclass of :py:class:`Process`).
     :returns: A generator of :py:class:`Process` objects.
     """
+    if not issubclass(obj_type, Process):
+        raise TypeError("Custom process types should inherit from proc.core.Process!")
     root = '/proc'
     num_processes = 0
     logger.debug("Scanning for process information in %r ..", root)

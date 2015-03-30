@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 29, 2015
+# Last Change: March 30, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -37,23 +37,6 @@ from proc.core import find_processes, Process
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
-
-
-def get_process_tree():
-    """
-    Construct a process tree from the result of :py:func:`~proc.core.find_processes()`.
-
-    :returns: A :py:class:`ProcessNode` object that forms the root node of the
-              constructed tree (this node represents init_).
-
-    .. _init: http://en.wikipedia.org/wiki/init
-    """
-    mapping = dict((p.pid, p) for p in find_processes(obj_type=ProcessNode))
-    for obj in mapping.values():
-        if obj.ppid != 0:
-            obj.parent = mapping[obj.ppid]
-            obj.parent.children.append(obj)
-    return mapping[1]
 
 
 class ProcessNode(Process):
@@ -163,3 +146,25 @@ class ProcessNode(Process):
                     and (exe_name is None or process.exe_name == exe_name)
                     and (exe_path is None or process.exe_path == exe_path)):
                 yield process
+
+
+def get_process_tree(obj_type=ProcessNode):
+    """
+    Construct a process tree from the result of :py:func:`~proc.core.find_processes()`.
+
+    :param obj_type: The type of process objects to construct (expected to be
+                     :py:class:`ProcessNode` or a subclass of
+                     :py:class:`ProcessNode`).
+    :returns: A :py:class:`ProcessNode` object that forms the root node of the
+              constructed tree (this node represents init_).
+
+    .. _init: http://en.wikipedia.org/wiki/init
+    """
+    if not issubclass(obj_type, ProcessNode):
+        raise TypeError("Custom process types should inherit from proc.tree.ProcessNode!")
+    mapping = dict((p.pid, p) for p in find_processes(obj_type=obj_type))
+    for obj in mapping.values():
+        if obj.ppid != 0:
+            obj.parent = mapping[obj.ppid]
+            obj.parent.children.append(obj)
+    return mapping[1]
