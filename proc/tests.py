@@ -191,6 +191,8 @@ class ProcTestCase(unittest.TestCase):
 
     def test_tree_construction(self, timeout=60):
         """Test the functionality of the :py:mod:`proc.tree` module."""
+        # Test argument validation.
+        self.assertRaises(TypeError, get_process_tree, obj_type=object)
         # Spawn a child and grandchild (because of shell=True) that will live for a minute.
         child = subprocess.Popen(['sleep 60'], shell=True)
         # Use a try / finally block to make sure we kill our child before returning.
