@@ -91,6 +91,12 @@ class ProcTestCase(unittest.TestCase):
 
     def test_find_processes(self):
         """Test the :py:func:`proc.core.find_processes()` function."""
+        # Test argument validation. Obscure Python implementation detail:
+        # Because find_processes() returns a generator we need to actually ask
+        # for the first value to be produced in order to invoke the argument
+        # validation.
+        self.assertRaises(TypeError, next, find_processes(obj_type=object))
+        # Test some basic assumptions about the result of find_processes().
         processes = dict((p.pid, p) for p in find_processes())
         assert 1 in processes, "init process not found in output of find_processes()!"
         assert processes[1].comm == 'init', "init isn't called init?!"
