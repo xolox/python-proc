@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 30, 2015
+# Last Change: April 16, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -71,10 +71,6 @@ class ProcessNode(Process):
        A list of :py:class:`ProcessNode` objects with the children of this
        process.
     """
-
-    # Prevent unnecessary creation of instance dictionaries (helps to keep
-    # memory requirements low).
-    __slots__ = ('parent', 'children')
 
     def __init__(self, *args, **kw):
         """

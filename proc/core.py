@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 30, 2015
+# Last Change: April 16, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -83,10 +83,6 @@ class Process(object):
 
     .. _man 5 proc: http://linux.die.net/man/5/proc
     """
-
-    # Prevent unnecessary creation of instance dictionaries (helps to keep
-    # memory requirements low).
-    __slots__ = ('proc_tree', 'stat_fields', '_cache')
 
     @classmethod
     def from_path(cls, directory):
