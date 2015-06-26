@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 16, 2015
+# Last Change: June 26, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -160,7 +160,7 @@ def get_process_tree(obj_type=ProcessNode):
         raise TypeError("Custom process types should inherit from proc.tree.ProcessNode!")
     mapping = dict((p.pid, p) for p in find_processes(obj_type=obj_type))
     for obj in mapping.values():
-        if obj.ppid != 0:
+        if obj.ppid != 0 and obj.ppid in mapping:
             obj.parent = mapping[obj.ppid]
             obj.parent.children.append(obj)
     return mapping[1]
