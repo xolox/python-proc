@@ -1,7 +1,7 @@
 # Makefile for proc.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 30, 2015
+# Last Change: June 26, 2015
 # URL: https://github.com/xolox/python-proc
 
 WORKON_HOME ?= $(HOME)/.virtualenvs
@@ -50,6 +50,7 @@ tox: install
 coverage: install
 	test -x "$(VIRTUAL_ENV)/bin/coverage" || ($(ACTIVATE) && pip-accel install coverage)
 	$(ACTIVATE) && coverage run setup.py test
+	$(ACTIVATE) && coverage combine
 	$(ACTIVATE) && coverage html
 	$(ACTIVATE) && coverage report --fail-under=90
 
