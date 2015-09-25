@@ -5,21 +5,21 @@
 # URL: https://proc.readthedocs.org
 
 """
-The :py:mod:`proc.apache` module monitors the memory usage of Apache_ workers.
+The :mod:`proc.apache` module monitors the memory usage of Apache_ workers.
 
-This module builds on top of the :py:mod:`proc.tree` module as an example of
+This module builds on top of the :mod:`proc.tree` module as an example of
 how memory usage of web server workers can be monitored using the `proc`
 package.
 
-The main entry point of this module is :py:func:`find_apache_memory_usage()`
+The main entry point of this module is :func:`find_apache_memory_usage()`
 which provides you with the minimum, average, median and maximum memory usage
 of the discovered Apache worker processes (it also provides the raw
-:py:attr:`~proc.core.Process.rss` value of each worker, in case you don't trust
+:attr:`~proc.core.Process.rss` value of each worker, in case you don't trust
 the aggregates ;-).
 
 .. note:: This module only works if you've configured your Apache web server to
           use an MPM_ based on processes (not threads). The main reason for
-          this is that :py:mod:`proc.core` doesn't expose information about the
+          this is that :mod:`proc.core` doesn't expose information about the
           individual threads in a process based on ``/proc/[pid]/task`` yet
           (I'm still on the fence about whether to expose this information or
           not).
@@ -47,13 +47,13 @@ def find_apache_memory_usage(exe_name='apache2'):
     :param exe_name: The base name of the Apache executable (a string).
     :returns: A tuple of two values:
 
-              1. A :py:class:`StatsList` of integers with the resident set size
+              1. A :class:`StatsList` of integers with the resident set size
                  of Apache workers that are not WSGI daemon processes.
               2. A dictionary of key/value pairs, as follows:
 
                  - Each key is a WSGI process group names as keys (see the
-                   :py:attr:`~MaybeApacheWorker.wsgi_process_group` property).
-                 - Each value is a :py:class:`StatsList` of integers with the
+                   :attr:`~MaybeApacheWorker.wsgi_process_group` property).
+                 - Each value is a :class:`StatsList` of integers with the
                    resident set size of the workers belonging to the WSGI
                    process group.
     """
@@ -69,14 +69,14 @@ def find_apache_memory_usage(exe_name='apache2'):
 
 class StatsList(list):
 
-    """Subclass of :py:class:`list` that provides some simple statistics."""
+    """Subclass of :class:`list` that provides some simple statistics."""
 
     @property
     def min(self):
         """
         The minimum value from a list of numbers (a number).
 
-        :raises: :py:exc:`~exceptions.ValueError` when the list is empty.
+        :raises: :exc:`~exceptions.ValueError` when the list is empty.
         """
         return min(self)
 
@@ -85,7 +85,7 @@ class StatsList(list):
         """
         The maximum value from a list of numbers (a number).
 
-        :raises: :py:exc:`~exceptions.ValueError` when the list is empty.
+        :raises: :exc:`~exceptions.ValueError` when the list is empty.
         """
         return max(self)
 
@@ -94,7 +94,7 @@ class StatsList(list):
         """
         The average value from a list of numbers (a float).
 
-        :raises: :py:exc:`~exceptions.ValueError` when the list is empty.
+        :raises: :exc:`~exceptions.ValueError` when the list is empty.
         """
         if len(self) == 0:
             raise ValueError("Cannot calculate average of empty list")
@@ -105,7 +105,7 @@ class StatsList(list):
         """
         The median value from a list of numbers (a number).
 
-        :raises: :py:exc:`~exceptions.ValueError` when the list is empty.
+        :raises: :exc:`~exceptions.ValueError` when the list is empty.
         """
         if len(self) == 0:
             raise ValueError("Cannot calculate median of empty list")
@@ -120,11 +120,11 @@ class StatsList(list):
 
 def find_apache_workers(exe_name='apache2'):
     """
-    Find Apache workers in the process tree reported by :py:func:`~proc.tree.get_process_tree()`.
+    Find Apache workers in the process tree reported by :func:`~proc.tree.get_process_tree()`.
 
     :param exe_name: The base name of the Apache executable (a string).
-    :returns: A generator of :py:class:`MaybeApacheWorker` objects.
-    :raises: :py:exc:`ApacheDaemonNotRunning` when the Apache master process
+    :returns: A generator of :class:`MaybeApacheWorker` objects.
+    :raises: :exc:`ApacheDaemonNotRunning` when the Apache master process
              cannot be found.
     """
     init = get_process_tree(obj_type=MaybeApacheWorker)
@@ -138,7 +138,7 @@ def find_apache_workers(exe_name='apache2'):
 
 class MaybeApacheWorker(ProcessNode):
 
-    """Subclass of :py:class:`~proc.tree.ProcessNode` that understands Apache workers."""
+    """Subclass of :class:`~proc.tree.ProcessNode` that understands Apache workers."""
 
     @property
     def wsgi_process_group(self):
@@ -158,7 +158,7 @@ class MaybeApacheWorker(ProcessNode):
            the WSGIDaemonProcess_ directive for details) and in such cases the
            trailing parenthesis is truncated as well.
 
-        If the first string in :py:attr:`~proc.core.Process.cmdline` doesn't
+        If the first string in :attr:`~proc.core.Process.cmdline` doesn't
         start with ``(wsgi:`` this property returns an empty string.
 
         .. _mod_wsgi: https://code.google.com/p/modwsgi/
@@ -173,4 +173,4 @@ class MaybeApacheWorker(ProcessNode):
 
 class ApacheDaemonNotRunning(Exception):
 
-    """Exception raised by :py:func:`find_apache_workers()` when it cannot locate the Apache daemon process."""
+    """Exception raised by :func:`find_apache_workers()` when it cannot locate the Apache daemon process."""

@@ -5,7 +5,7 @@
 # URL: https://proc.readthedocs.org
 
 """
-The :py:mod:`proc.cron` module implements graceful termination of cron_.
+The :mod:`proc.cron` module implements graceful termination of cron_.
 
 .. contents::
    :local:
@@ -53,9 +53,9 @@ work than it's ever going to be worth...
 A robust solution: ``cron-graceful``
 ====================================
 
-The :py:mod:`proc.cron` module implements the command line program
+The :mod:`proc.cron` module implements the command line program
 ``cron-graceful`` which gracefully stops cron daemons. This module builds on
-top of the :py:mod:`proc.tree` module as a demonstration of the possibilities
+top of the :mod:`proc.tree` module as a demonstration of the possibilities
 of the `proc` package and as a practical tool that is ready to be used on any
 Linux system that has Python and cron_ installed.
 
@@ -71,7 +71,7 @@ To use the program you simply run it with super user privileges:
 
    $ sudo cron-graceful
 
-Internal documentation of :py:mod:`proc.cron`
+Internal documentation of :mod:`proc.cron`
 =============================================
 
 .. _cron: http://en.wikipedia.org/wiki/Cron
@@ -110,7 +110,7 @@ execute = functools.partial(execute, logger=logger)
 
 
 def main():
-    """Wrapper for :py:func:`cron_graceful()` that feeds it :py:data:`sys.argv`."""
+    """Wrapper for :func:`cron_graceful()` that feeds it :data:`sys.argv`."""
     coloredlogs.install()
     cron_graceful(sys.argv[1:])
 
@@ -245,8 +245,8 @@ def find_cron_daemon():
     """
     Find the cron daemon process.
 
-    :returns: A :py:class:`~proc.tree.ProcessNode` object.
-    :raises: :py:exc:`CronDaemonNotRunning` when the cron daemon process cannot
+    :returns: A :class:`~proc.tree.ProcessNode` object.
+    :raises: :exc:`CronDaemonNotRunning` when the cron daemon process cannot
              be located.
     """
     init = get_process_tree()
@@ -262,7 +262,7 @@ def run_additions():
 
     If a command named ``cron-graceful-additions`` exists in the ``$PATH``
     it will be executed directly after the cron daemon is paused using
-    :py:func:`pause_cron_daemon()`. This allows you to inject custom logic
+    :func:`pause_cron_daemon()`. This allows you to inject custom logic
     into the graceful shutdown process. If the command fails a warning
     will be logged but the ``cron-graceful`` program will continue.
     """
@@ -282,11 +282,11 @@ def wait_for_processes(processes):
     Prints an overview of running processes to the terminal once a second so
     the user knows what they are waiting for.
 
-    This function is not specific to :py:mod:`proc.cron` at all (it doesn't
+    This function is not specific to :mod:`proc.cron` at all (it doesn't
     even need to know what cron jobs are), it just waits until all of the given
     processes have ended.
 
-    :param processes: A list of :py:class:`~proc.tree.ProcessNode` objects.
+    :param processes: A list of :class:`~proc.tree.ProcessNode` objects.
     """
     wait_timer = Timer()
     spinner = Spinner(timer=wait_timer)
@@ -309,7 +309,7 @@ def terminate_cron_daemon(cron_daemon):
     """
     Terminate the cron daemon.
 
-    :param cron_daemon: The :py:class:`~proc.tree.ProcessNode` of the cron
+    :param cron_daemon: The :class:`~proc.tree.ProcessNode` of the cron
                         daemon process.
     """
     # Forcefully kill the cron daemon. This is kind of brute force, but we
@@ -328,4 +328,4 @@ def terminate_cron_daemon(cron_daemon):
 
 class CronDaemonNotRunning(Exception):
 
-    """Exception raised by :py:func:`find_cron_daemon()` when it cannot locate the cron daemon process."""
+    """Exception raised by :func:`find_cron_daemon()` when it cannot locate the cron daemon process."""

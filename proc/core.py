@@ -5,15 +5,15 @@
 # URL: https://proc.readthedocs.org
 
 """
-The :py:mod:`proc.core` module contains the core functionality of the `proc` package.
+The :mod:`proc.core` module contains the core functionality of the `proc` package.
 
 This module provides a simple interface to the process information available in
 ``/proc``. It takes care of the text parsing that's necessary to gather process
 information from ``/proc`` but it doesn't do much more than that. The functions
-in this module produce :py:class:`Process` objects.
+in this module produce :class:`Process` objects.
 
 If you're just getting started with this module I suggest you jump to the
-documentation of :py:func:`find_processes()` because this function provides the
+documentation of :func:`find_processes()` because this function provides the
 "top level entry point" into most of the functionality provided by this
 module.
 """
@@ -42,9 +42,9 @@ class Process(object):
     """
     Process information based on ``/proc/[pid]/stat`` and similar files.
 
-    :py:class:`Process` objects are constructed using
-    :py:func:`find_processes()` and :py:func:`Process.from_path()`. You
-    shouldn't be using the :py:class:`Process` constructor directly unless you
+    :class:`Process` objects are constructed using
+    :func:`find_processes()` and :func:`Process.from_path()`. You
+    shouldn't be using the :class:`Process` constructor directly unless you
     know what you're doing.
 
     **Comparison to official /proc documentation**
@@ -57,19 +57,19 @@ class Process(object):
     ====================  =====
     Property              Index
     ====================  =====
-    :py:attr:`pid`            0
-    :py:attr:`comm`           1
-    :py:attr:`state`          2
-    :py:attr:`ppid`           3
-    :py:attr:`pgrp`           4
-    :py:attr:`session`        5
-    :py:attr:`starttime`     21
-    :py:attr:`vsize`         22
-    :py:attr:`rss`           23
+    :attr:`pid`            0
+    :attr:`comm`           1
+    :attr:`state`          2
+    :attr:`ppid`           3
+    :attr:`pgrp`           4
+    :attr:`session`        5
+    :attr:`starttime`     21
+    :attr:`vsize`         22
+    :attr:`rss`           23
     ====================  =====
 
     As you can see from the indexes in the table above quite a few fields from
-    ``/proc/[pid]/stat`` are not currently exposed by :py:class:`Process`
+    ``/proc/[pid]/stat`` are not currently exposed by :class:`Process`
     objects. In fact ``/proc/[pid]/stat`` contains 44 fields! Some of these
     fields are no longer maintained by the Linux kernel and remain only for
     backwards compatibility (so exposing them is not useful) while other fields
@@ -95,8 +95,8 @@ class Process(object):
         :returns: A process information object or ``None`` (in case the process
                   ends before its information can be read).
 
-        This class method is used by :py:func:`find_processes()` to construct
-        :py:class:`Process` objects. It's exposed as a separate method because
+        This class method is used by :func:`find_processes()` to construct
+        :class:`Process` objects. It's exposed as a separate method because
         it may sometimes be useful to call directly. For example:
 
         >>> from proc.core import Process
@@ -147,7 +147,7 @@ class Process(object):
         """
         Create a human readable representation of a process information object.
 
-        :returns: A string containing what looks like a :py:class:`Process`
+        :returns: A string containing what looks like a :class:`Process`
                   constructor, but showing public properties instead of
                   internal properties.
         """
@@ -191,7 +191,7 @@ class Process(object):
         The filename is not enclosed in parentheses like it is in
         ``/proc/[pid]/stat`` because the parentheses are an implementation
         detail of the encoding of ``/proc/[pid]/stat`` and the whole point of
-        :py:mod:`proc.core` is to hide ugly encoding details like this :-).
+        :mod:`proc.core` is to hide ugly encoding details like this :-).
 
         .. note:: This field can be truncated by the Linux kernel so strictly
                   speaking you can't rely on this field unless you know that
@@ -213,7 +213,7 @@ class Process(object):
                   As you can see in the example above the executable name
                   ``console-kit-daemon`` is truncated to ``console-kit-dae``.
                   If you need a reliable way to find the executable name
-                  consider using the :py:attr:`cmdline` and/or :py:attr:`exe`
+                  consider using the :attr:`cmdline` and/or :attr:`exe`
                   properties.
         """
         return self.stat_fields[1]
@@ -299,7 +299,7 @@ class Process(object):
         determine the absolute start time of the process (the number of seconds
         since the Unix epoch_).
 
-        See also the :py:attr:`runtime` property.
+        See also the :attr:`runtime` property.
 
         **Availability:** This property is calculated from the contents of
         ``/proc/[pid]/stat`` and ``/proc/uptime`` and is always available.
@@ -320,7 +320,7 @@ class Process(object):
         """
         The time in seconds since the process started (a float).
 
-        This property is calculated based on :py:attr:`starttime` every time
+        This property is calculated based on :attr:`starttime` every time
         it's requested (so it will always be up to date).
 
         .. warning:: The runtime will not stop growing when the process ends
@@ -401,7 +401,7 @@ class Process(object):
                   process in question) it may be impossible to determine the
                   effective command line that was used to start a process. If
                   you're just interested in the pathname of the executable
-                  consider using the :py:attr:`exe` property instead:
+                  consider using the :attr:`exe` property instead:
 
                   >>> from proc.core import find_processes
                   >>> from pprint import pprint
@@ -447,7 +447,7 @@ class Process(object):
         of an arbitrary process and this property tries to make it easier. Its
         value is based on the first of the following methods that works:
 
-        1. If :py:attr:`exe` is available then this pathname is returned.
+        1. If :attr:`exe` is available then this pathname is returned.
 
            - Pro: This method provides the most reliable way to determine the
              absolute pathname of the executed command because (as far as I
@@ -455,7 +455,7 @@ class Process(object):
            - Con: This method can fail because you don't have permission to
              dereference the ``/proc/[pid]/exe`` symbolic link.
 
-        2. If the first string in :py:attr:`cmdline` contains the absolute
+        2. If the first string in :attr:`cmdline` contains the absolute
            pathname of an executable file then this pathname is returned.
 
            - Pro: This method doesn't require the same permissions that method
@@ -483,27 +483,27 @@ class Process(object):
         arbitrary process and this property tries to make it easier. Its value
         is based on the first of the following methods that works:
 
-        1. If :py:attr:`exe_path` is available then the base name of this
+        1. If :attr:`exe_path` is available then the base name of this
            pathname is returned.
 
-           - Pro: When the :py:attr:`exe_path` property is available it is
+           - Pro: When the :attr:`exe_path` property is available it is
              fairly reliable.
-           - Con: The :py:attr:`exe_path` property can be unavailable (refer to
+           - Con: The :attr:`exe_path` property can be unavailable (refer to
              its documentation for details).
 
-        2. If the first string in :py:attr:`cmdline` contains a name that is
+        2. If the first string in :attr:`cmdline` contains a name that is
            available on the executable search path (``$PATH``) then this name
            is returned.
 
-           - Pro: As long as :py:attr:`cmdline` contains the name of an
+           - Pro: As long as :attr:`cmdline` contains the name of an
              executable available on the ``$PATH`` this method works.
            - Con: This method can fail because a process has changed its own
              command line (after it was started).
 
-        3. If both of the methods above fail :py:attr:`comm` is returned.
+        3. If both of the methods above fail :attr:`comm` is returned.
 
-           - Pro: The :py:attr:`comm` field is always available.
-           - Con: The :py:attr:`comm` field may be truncated.
+           - Pro: The :attr:`comm` field is always available.
+           - Con: The :attr:`comm` field may be truncated.
         """
         if self.exe_path:
             return os.path.basename(self.exe_path)
@@ -522,8 +522,8 @@ class Process(object):
         property is referenced to make sure that the process still exists and
         has not turned into a zombie_ process.
 
-        See also :py:func:`stop()`, :py:func:`cont()`, :py:func:`terminate()`
-        and :py:func:`kill()`.
+        See also :func:`stop()`, :func:`cont()`, :func:`terminate()`
+        and :func:`kill()`.
         """
         stat_fields = parse_process_status(self.proc_tree, silent=True)
         return bool(stat_fields and stat_fields[2] != 'Z')
@@ -535,8 +535,8 @@ class Process(object):
         This sends a SIGSTOP_ signal to the process. This signal cannot be
         intercepted or ignored.
 
-        See also :py:attr:`is_alive`, :py:func:`cont()`, :py:func:`terminate()`
-        and :py:func:`kill()`.
+        See also :attr:`is_alive`, :func:`cont()`, :func:`terminate()`
+        and :func:`kill()`.
 
         .. _SIGSTOP: http://en.wikipedia.org/wiki/Unix_signal#SIGSTOP
         """
@@ -545,13 +545,13 @@ class Process(object):
 
     def cont(self):
         """
-        Continue (restart) a process that was previously paused using :py:func:`stop()`.
+        Continue (restart) a process that was previously paused using :func:`stop()`.
 
         This sends a SIGCONT_ signal to the process. This signal cannot be
         intercepted or ignored.
 
-        See also :py:attr:`is_alive`, :py:func:`stop()`, :py:func:`terminate()`
-        and :py:func:`kill()`.
+        See also :attr:`is_alive`, :func:`stop()`, :func:`terminate()`
+        and :func:`kill()`.
 
         .. _SIGCONT: http://en.wikipedia.org/wiki/Unix_signal#SIGCONT
         """
@@ -566,8 +566,8 @@ class Process(object):
         intercept this signal to allow for graceful termination (releasing
         resources, saving state).
 
-        See also :py:attr:`is_alive`, :py:func:`stop()`, :py:func:`cont()` and
-        :py:func:`kill()`.
+        See also :attr:`is_alive`, :func:`stop()`, :func:`cont()` and
+        :func:`kill()`.
 
         .. _SIGTERM: http://en.wikipedia.org/wiki/Unix_signal#SIGTERM
         """
@@ -581,8 +581,8 @@ class Process(object):
         This sends a SIGKILL_ signal to the process. This signal cannot be
         intercepted or ignored.
 
-        See also :py:attr:`is_alive`, :py:func:`stop()`, :py:func:`cont()` and
-        :py:func:`terminate()`.
+        See also :attr:`is_alive`, :func:`stop()`, :func:`cont()` and
+        :func:`terminate()`.
 
         .. _SIGKILL: http://en.wikipedia.org/wiki/Unix_signal#SIGKILL
         """
@@ -595,8 +595,8 @@ def find_processes(obj_type=Process):
     Scan the numerical subdirectories of ``/proc`` for process information.
 
     :param obj_type: The type of process objects to construct (expected to be
-                     :py:class:`Process` or a subclass of :py:class:`Process`).
-    :returns: A generator of :py:class:`Process` objects.
+                     :class:`Process` or a subclass of :class:`Process`).
+    :returns: A generator of :class:`Process` objects.
     """
     if not issubclass(obj_type, Process):
         raise TypeError("Custom process types should inherit from proc.core.Process!")
@@ -616,8 +616,8 @@ def sorted_by_pid(processes):
     """
     Sort the given processes by their process ID.
 
-    :param processes: An iterable of :py:class:`Process` objects.
-    :returns: A list of :py:class:`Process` objects sorted by their process ID.
+    :param processes: An iterable of :class:`Process` objects.
+    :returns: A list of :class:`Process` objects sorted by their process ID.
     """
     return sorted(processes, key=lambda p: p.pid)
 

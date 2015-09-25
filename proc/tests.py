@@ -5,11 +5,11 @@
 # URL: https://py2deb.readthedocs.org
 
 """
-The :py:mod:`py2deb.tests` module contains the automated tests for `py2deb`.
+The :mod:`py2deb.tests` module contains the automated tests for `py2deb`.
 
 The makefile in the py2deb git repository uses pytest_ to run the test suite
 because of pytest's great error reporting. Nevertheless the test suite is
-written to be compatible with the :py:mod:`unittest` module (part of Python's
+written to be compatible with the :mod:`unittest` module (part of Python's
 standard library) so that the test suite can be run without additional external
 dependencies.
 
@@ -59,7 +59,7 @@ def setUpModule():
 class ProcTestCase(unittest.TestCase):
 
     """
-    :py:mod:`unittest` compatible container for the test suite of `proc`.
+    :mod:`unittest` compatible container for the test suite of `proc`.
     """
 
     def setUp(self):
@@ -67,7 +67,7 @@ class ProcTestCase(unittest.TestCase):
         coloredlogs.set_level(logging.DEBUG)
 
     def test_process_from_path(self):
-        """Test the :py:func:`proc.core.Process.from_path()` constructor."""
+        """Test the :func:`proc.core.Process.from_path()` constructor."""
         process = Process.from_path('/proc/self')
         # The following tests verify properties based on information available
         # from the Python standard library.
@@ -91,7 +91,7 @@ class ProcTestCase(unittest.TestCase):
         assert isinstance(process.session, int), "Process session ID not available!"
 
     def test_find_processes(self):
-        """Test the :py:func:`proc.core.find_processes()` function."""
+        """Test the :func:`proc.core.find_processes()` function."""
         # Test argument validation. Obscure Python implementation detail:
         # Because find_processes() returns a generator we need to actually ask
         # for the first value to be produced in order to invoke the argument
@@ -104,7 +104,7 @@ class ProcTestCase(unittest.TestCase):
         assert os.getpid() in processes, "Current process not found in output of find_processes()!"
 
     def test_is_alive(self):
-        """Test the :py:func:`proc.core.Process.is_alive` property."""
+        """Test the :func:`proc.core.Process.is_alive` property."""
         # Spawn a child that will live for a minute.
         child = subprocess.Popen(['sleep', '60'])
         try:
@@ -171,7 +171,7 @@ class ProcTestCase(unittest.TestCase):
             child.terminate()
 
     def test_exe_path_fallback(self):
-        """Test the fall back method of :py:attr:`proc.core.Process.exe_path`."""
+        """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
         candidates = [p for p in find_processes() if p.exe_path and not p.exe]
         logger.debug("Candidates for Process.exe_path fall back test:\n%s", pformat(candidates))
         if not candidates:
@@ -181,7 +181,7 @@ class ProcTestCase(unittest.TestCase):
             "Fall back method of Process.exe_path reported invalid executable pathname!"
 
     def test_exe_name_fallback(self):
-        """Test the fall back method of :py:attr:`proc.core.Process.exe_name`."""
+        """Test the fall back method of :attr:`proc.core.Process.exe_name`."""
         if os.getuid() == 0:
             # Given root privileges all /proc/[pid]/exe symbolic links can be
             # successfully resolved so we can't test the fall back method.
@@ -196,7 +196,7 @@ class ProcTestCase(unittest.TestCase):
             "Fall back method of Process.exe_name reported executable base name not available on $PATH?!"
 
     def test_tree_construction(self, timeout=60):
-        """Test the functionality of the :py:mod:`proc.tree` module."""
+        """Test the functionality of the :mod:`proc.tree` module."""
         # Test argument validation.
         self.assertRaises(TypeError, get_process_tree, obj_type=object)
         # Spawn a child and grandchild (because of shell=True) that will live for a minute.
@@ -243,7 +243,7 @@ class ProcTestCase(unittest.TestCase):
             child.terminate()
 
     def test_wait_for_processes(self):
-        """Test the :py:func:`proc.cron.wait_for_processes()` function."""
+        """Test the :func:`proc.cron.wait_for_processes()` function."""
         children = [subprocess.Popen(['sleep', str(int(5 + random.random() * 5))]) for i in range(5)]
         wait_for_processes([Process.from_pid(c.pid) for c in children])
         assert sum(c.poll() is None for c in children) == 0, \
@@ -262,7 +262,7 @@ class ProcTestCase(unittest.TestCase):
 
     def test_race_conditions(self, timeout=60):
         """
-        Test the handling of race conditions in :py:mod:`proc.core`.
+        Test the handling of race conditions in :mod:`proc.core`.
 
         Scanning ``/proc`` is inherently vulnerable to race conditions, for
         example:
@@ -271,16 +271,16 @@ class ProcTestCase(unittest.TestCase):
            exists, but by the time ``/proc/[pid]/stat`` is read the process has
            ended and ``/proc/[pid]`` no longer exists.
 
-        2. A :py:class:`proc.core.Process` object is constructed from the
+        2. A :class:`proc.core.Process` object is constructed from the
            information available in ``/proc/[pid]/stat``, but by the time
            ``/proc/[pid]/cmdline`` is read the process has ended and
            ``/proc/[pid]`` no longer exists.
 
         This test intentionally creates race conditions in the reading of
         ``/proc/[pid]/stat`` and ``/proc/[pid]/cmdline`` files, to verify that
-        the :py:mod:`proc.core` module never breaks on a race condition.
+        the :mod:`proc.core` module never breaks on a race condition.
 
-        It works by using the :py:mod:`multiprocessing` module to quickly spawn
+        It works by using the :mod:`multiprocessing` module to quickly spawn
         and reclaim subprocesses while at the same time scanning through
         ``/proc`` continuously. The test times out after 60 seconds but in all
         of the runs I've tried so far it never needs more than 10 seconds to
@@ -320,7 +320,7 @@ class ProcTestCase(unittest.TestCase):
             manager.join()
 
     def test_stats_list(self):
-        """Test the :py:class:`proc.apache.StatsList` class."""
+        """Test the :class:`proc.apache.StatsList` class."""
         # Test argument validation.
         self.assertRaises(ValueError, operator.attrgetter('average'), StatsList())
         self.assertRaises(ValueError, operator.attrgetter('median'), StatsList())
@@ -334,7 +334,7 @@ class ProcTestCase(unittest.TestCase):
         assert StatsList([0, 1, 1, 2, 3, 5, 8, 13, 21]).median == 3
 
     def test_apache_worker_monitoring(self):
-        """Test the :py:mod:`proc.apache` module."""
+        """Test the :mod:`proc.apache` module."""
         if not os.path.exists('/etc/apache2/sites-enabled/proc-test-vhost'):
             logger.debug("Skipping test: Apache worker monitoring test disabled except on Travis CI!")
             return

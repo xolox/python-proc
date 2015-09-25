@@ -5,7 +5,7 @@
 # URL: https://proc.readthedocs.org
 
 """
-The top level :py:mod:`proc` module contains only a version number.
+The top level :mod:`proc` module contains only a version number.
 
 .. data:: __version__
 
