@@ -122,32 +122,37 @@ def cron_graceful(arguments):
     if not dry_run:
         ensure_root_privileges()
     initialize_system_logging()
-    if not dry_run:
-        # Prevent the cron daemon from starting new cron jobs.
-        find_cron_daemon().stop()
-        # Enable user defined additional logic.
-        run_additions()
-    # Identify the running cron jobs based on the process tree _after_ the cron
-    # daemon has been paused (assuming we're not performing a dry run) so we
-    # know for sure that we see all running cron jobs (also we're not
-    # interested in any processes that have already been stopped by
-    # cron-graceful-additions).
-    cron_daemon = find_cron_daemon()
-    cron_jobs = sorted_by_pid(cron_daemon.grandchildren)
-    if cron_jobs:
-        logger.info("Found %s: %s",
-                    pluralize(len(cron_jobs), "running cron job"),
-                    concatenate(str(j.pid) for j in cron_jobs))
-        # Wait for the running cron jobs to finish.
-        wait_for_processes(cron_jobs)
+    try:
+        cron_daemon = find_cron_daemon()
+    except CronDaemonNotRunning:
+        logger.info("No running cron daemon found, assuming it was previously stopped ..")
     else:
-        logger.info("No running cron jobs found.")
-    # Terminate the cron daemon.
-    if dry_run:
-        logger.info("Stopping cron daemon with process id %i ..", cron_daemon.pid)
-    else:
-        terminate_cron_daemon(cron_daemon)
-    logger.info("Done! Took %s to gracefully terminate cron.", runtime_timer.rounded)
+        if not dry_run:
+            # Prevent the cron daemon from starting new cron jobs.
+            cron_daemon.stop()
+            # Enable user defined additional logic.
+            run_additions()
+        # Identify the running cron jobs based on the process tree _after_ the
+        # cron daemon has been paused (assuming we're not performing a dry run)
+        # so we know for sure that we see all running cron jobs (also we're not
+        # interested in any processes that have already been stopped by
+        # cron-graceful-additions).
+        cron_daemon = find_cron_daemon()
+        cron_jobs = sorted_by_pid(cron_daemon.grandchildren)
+        if cron_jobs:
+            logger.info("Found %s: %s",
+                        pluralize(len(cron_jobs), "running cron job"),
+                        concatenate(str(j.pid) for j in cron_jobs))
+            # Wait for the running cron jobs to finish.
+            wait_for_processes(cron_jobs)
+        else:
+            logger.info("No running cron jobs found.")
+        # Terminate the cron daemon.
+        if dry_run:
+            logger.info("Stopping cron daemon with process id %i ..", cron_daemon.pid)
+        else:
+            terminate_cron_daemon(cron_daemon)
+        logger.info("Done! Took %s to gracefully terminate cron.", runtime_timer.rounded)
 
 
 def parse_arguments(arguments):
