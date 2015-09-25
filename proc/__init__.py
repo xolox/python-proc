@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 26, 2015
+# Last Change: September 25, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -13,4 +13,4 @@ The top level :mod:`proc` module contains only a version number.
 """
 
 # Semi-standard module versioning.
-__version__ = '0.2.2'
+__version__ = '0.2.3'

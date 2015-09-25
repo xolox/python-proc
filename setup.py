@@ -47,7 +47,7 @@ setup(
         'cached-property >= 1.0.0',
         'coloredlogs >= 0.8',
         'executor >= 1.7.1',
-        'humanfriendly >= 1.16',
+        'humanfriendly >= 1.35',
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',

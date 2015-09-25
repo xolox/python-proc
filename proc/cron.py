@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 29, 2015
+# Last Change: September 25, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -91,12 +91,11 @@ import os
 import socket
 import sys
 import textwrap
-import time
 
 # External dependencies.
 import coloredlogs
 from executor import ExternalCommandFailed, execute, quote, which
-from humanfriendly import concatenate, format_timespan, minimum_spinner_interval, pluralize, Spinner, Timer
+from humanfriendly import concatenate, format_timespan, pluralize, Spinner, Timer
 
 # Modules provided by our package.
 from proc.core import sorted_by_pid
@@ -289,19 +288,18 @@ def wait_for_processes(processes):
     :param processes: A list of :class:`~proc.tree.ProcessNode` objects.
     """
     wait_timer = Timer()
-    spinner = Spinner(timer=wait_timer)
     for process in processes:
         logger.info("Waiting for process %i: %s (%s)",
                     process.pid, quote(process.cmdline), format_timespan(round(process.runtime)))
-    while True:
-        running_processes = [p for p in processes if p.is_alive]
-        if not running_processes:
-            break
-        num_processes = pluralize(len(running_processes), "process", "processes")
-        process_ids = concatenate(str(p.pid) for p in running_processes)
-        spinner.step(label="Waiting for %s: %s" % (num_processes, process_ids))
-        time.sleep(minimum_spinner_interval)
-    spinner.clear()
+    with Spinner(timer=wait_timer) as spinner:
+        while True:
+            running_processes = [p for p in processes if p.is_alive]
+            if not running_processes:
+                break
+            num_processes = pluralize(len(running_processes), "process", "processes")
+            process_ids = concatenate(str(p.pid) for p in running_processes)
+            spinner.step(label="Waiting for %s: %s" % (num_processes, process_ids))
+            spinner.sleep()
     logger.info("All processes have finished, we're done waiting (took %s).", wait_timer.rounded)
 
 
