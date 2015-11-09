@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 16, 2015
+# Last Change: November 9, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -25,8 +25,8 @@ import signal
 import time
 
 # External dependencies.
-from cached_property import cached_property
 from executor import which, quote
+from property_manager import lazy_property
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -170,7 +170,7 @@ class Process(object):
                 fields.append("%s=%r" % (name, value))
         return "%s(%s)" % (self.__class__.__name__, ", ".join(fields))
 
-    @cached_property
+    @lazy_property
     def pid(self):
         """
         The process ID (an integer).
@@ -180,7 +180,7 @@ class Process(object):
         """
         return int(self.stat_fields[0])
 
-    @cached_property
+    @lazy_property
     def comm(self):
         """
         The filename of the executable.
@@ -218,7 +218,7 @@ class Process(object):
         """
         return self.stat_fields[1]
 
-    @cached_property
+    @lazy_property
     def state(self):
         """
         A single uppercase character describing the state of the process (a string).
@@ -237,7 +237,7 @@ class Process(object):
         """
         return self.stat_fields[2]
 
-    @cached_property
+    @lazy_property
     def ppid(self):
         """
         The process ID of the parent process (an integer).
@@ -257,7 +257,7 @@ class Process(object):
         """
         return int(self.stat_fields[3])
 
-    @cached_property
+    @lazy_property
     def pgrp(self):
         """
         The process group ID of the process (an integer).
@@ -267,7 +267,7 @@ class Process(object):
         """
         return int(self.stat_fields[4])
 
-    @cached_property
+    @lazy_property
     def session(self):
         """
         The session ID of the process (an integer).
@@ -277,7 +277,7 @@ class Process(object):
         """
         return int(self.stat_fields[5])
 
-    @cached_property
+    @lazy_property
     def starttime(self):
         """
         The time at which the process was started (a float).
@@ -332,7 +332,7 @@ class Process(object):
         """
         return max(0, time.time() - self.starttime)
 
-    @cached_property
+    @lazy_property
     def vsize(self):
         """
         The virtual memory size of the process in bytes (an integer).
@@ -342,7 +342,7 @@ class Process(object):
         """
         return int(self.stat_fields[22])
 
-    @cached_property
+    @lazy_property
     def rss(self):
         """
         The resident set size of the process *in bytes* (an integer).
@@ -366,7 +366,7 @@ class Process(object):
         """
         return int(self.stat_fields[23]) * os.sysconf('SC_PAGESIZE')
 
-    @cached_property
+    @lazy_property
     def cmdline(self):
         """
         The complete command line for the process (a list of strings).
@@ -414,7 +414,7 @@ class Process(object):
         """
         return parse_process_cmdline(self.proc_tree)
 
-    @cached_property
+    @lazy_property
     def exe(self):
         """
         The actual pathname of the executed command (a string).
@@ -438,7 +438,7 @@ class Process(object):
         except Exception:
             return ''
 
-    @cached_property
+    @lazy_property
     def exe_path(self):
         """
         The absolute pathname of the executable (a string).
@@ -474,7 +474,7 @@ class Process(object):
                 return name
         return ''
 
-    @cached_property
+    @lazy_property
     def exe_name(self):
         """
         The base name of the executable (a string).

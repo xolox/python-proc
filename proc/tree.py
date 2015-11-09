@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 26, 2015
+# Last Change: November 9, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -32,6 +32,9 @@ of using the :mod:`proc.tree` module.
 # Standard library modules.
 import logging
 
+# External dependencies.
+from property_manager import lazy_property, writable_property
+
 # Modules provided by our package.
 from proc.core import find_processes, Process
 
@@ -59,29 +62,22 @@ class ProcessNode(Process):
 
     - If you're looking for specific descendant processes consider using
       :func:`find()` or :func:`find_all()`.
-
-    .. py:attribute:: parent
-
-       The :class:`ProcessNode` object of the parent process of this process
-       (``None`` when the process doesn't have a parent). Based on the
-       :attr:`~proc.core.Process.ppid` attribute.
-
-    .. py:attribute:: children
-
-       A list of :class:`ProcessNode` objects with the children of this
-       process.
     """
 
-    def __init__(self, *args, **kw):
+    @writable_property
+    def parent(self):
         """
-        Construct a process node.
+        The :class:`ProcessNode` object of the parent of this process.
 
-        This constructor accepts the same arguments as the
-        :class:`~proc.core.Process` constructor.
+        Based on the :attr:`~proc.core.Process.ppid` attribute. ``None`` when
+        the process doesn't have a parent.
         """
-        super(ProcessNode, self).__init__(*args, **kw)
-        self.parent = None
-        self.children = []
+        return None
+
+    @lazy_property
+    def children(self):
+        """A list of :class:`ProcessNode` objects with the children of this process."""
+        return []
 
     @property
     def grandchildren(self):
