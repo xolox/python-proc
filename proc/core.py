@@ -377,6 +377,17 @@ class Process(ControllableProcess):
         """
         return int(self.stat_fields[23]) * os.sysconf('SC_PAGESIZE')
 
+    @property
+    def command_line(self):
+        """
+        Alias for :attr:`cmdline`.
+
+        This alias exists so that :class:`~executor.ControllableProcess` can
+        log process ids and command lines (this helps to make the log output
+        more human friendly).
+        """
+        return self.cmdline
+
     @lazy_property
     def cmdline(self):
         """

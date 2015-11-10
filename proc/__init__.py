@@ -13,4 +13,4 @@ The top level :mod:`proc` module contains only a version number.
 """
 
 # Semi-standard module versioning.
-__version__ = '0.4'
+__version__ = '0.4.1'
