@@ -46,6 +46,10 @@ class Process(ControllableProcess):
     shouldn't be using the :class:`Process` constructor directly unless you
     know what you're doing.
 
+    :class:`Process` inherits from :class:`~executor.ControllableProcess` so
+    all of the process manipulation supported by :class:`~executor.ControllableProcess`
+    is also supported by :class:`Process` objects.
+
     **Comparison to official /proc documentation**
 
     Quite a few of the instance properties of this class are based on (and
