@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter.odding@paylogic.com>
-# Last Change: March 30, 2015
+# Last Change: November 10, 2015
 # URL: https://py2deb.readthedocs.org
 
 """
@@ -30,7 +30,7 @@ import unittest
 import coloredlogs
 
 # Modules included in our package.
-from executor import which
+from executor import ExternalCommand, which
 from humanfriendly import parse_size, Timer
 from pprint import pformat
 from proc.apache import find_apache_memory_usage, StatsList
@@ -106,69 +106,17 @@ class ProcTestCase(unittest.TestCase):
     def test_is_alive(self):
         """Test the :func:`proc.core.Process.is_alive` property."""
         # Spawn a child that will live for a minute.
-        child = subprocess.Popen(['sleep', '60'])
-        try:
+        with ExternalCommand('sleep', '60', check=False) as child:
             # Construct a process object for the child.
             process = Process.from_pid(child.pid)
             # Make sure the process object agrees the child is alive.
             assert process.is_alive, "Child died before Process.is_alive was called?!"
-        finally:
-            # Kill the child process.
-            child.terminate()
-        # Give the process a moment to terminate (significantly less time then
-        # the process is normally expected to run, otherwise there's no point
-        # in the test below).
-        wait_for_termination(process, timeout=10)
-        # Make sure the process object agrees the child is dead.
-        assert not process.is_alive, "Child is still alive even though we killed it?!"
-
-    def test_signals(self):
-        """Test the sending of ``SIGSTOP``, ``SIGCONT`` and ``SIGTERM`` signals."""
-        # Spawn a child that will live for a minute.
-        child = subprocess.Popen(['sleep', '60'])
-        try:
-            # Construct a process object for the child.
-            process = Process.from_pid(child.pid)
-            # Suspend the execution of the child process using SIGSTOP.
-            process.stop()
-            # Test that the child process doesn't respond to SIGTERM once suspended.
-            process.terminate()
-            assert process.is_alive, "Process responded to SIGTERM even though it was suspended?!"
-            # Resume the execution of the child process using SIGCONT.
-            process.cont()
-            # Test that the child process responds to SIGTERM again after having been resumed.
-            process.terminate()
-            # Give the process a moment to terminate (significantly less time then
-            # the process is normally expected to run, otherwise there's no point
-            # in the test below).
-            wait_for_termination(process, timeout=10)
-            assert not process.is_alive, "Process didn't respond to SIGTERM even though it was resumed?!"
-        finally:
-            # Kill the child process.
-            child.terminate()
-
-    def test_killing(self):
-        """Test the sending of ``SIGKILL`` signals."""
-        # Spawn a child that will live for a minute.
-        child = subprocess.Popen(['sleep', '60'])
-        try:
-            # Construct a process object for the child.
-            process = Process.from_pid(child.pid)
-            # Forcefully kill the child process using SIGKILL.
-            process.kill()
-            # Give the process a moment to terminate (significantly less time then
-            # the process is normally expected to run, otherwise there's no point
-            # in the test below).
-            wait_for_termination(process, timeout=10)
-            # Normally the `sleep 60' process would have been alive for +/- 60
-            # seconds but due to our SIGKILL it should terminate much earlier.
-            # If it's still running after the above loop of max +/- 10 seconds
-            # then the SIGKILL is clearly not working as expected (or we're
-            # running on a _really_ slow system).
-            assert not process.is_alive, "Process still running despite SIGKILL?!"
-        finally:
-            # Kill the child process.
-            child.terminate()
+            # Kill the child process and give it a moment to terminate
+            # (significantly less time then the process is normally expected to
+            # run, otherwise there's no point in the test below).
+            child.terminate(timeout=10)
+            # Make sure the process object agrees the child is dead.
+            assert not process.is_alive, "Child is still alive even though we killed it?!"
 
     def test_exe_path_fallback(self):
         """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
@@ -356,20 +304,6 @@ class ProcTestCase(unittest.TestCase):
 def executable(pathname):
     """Check whether a pathname is executable."""
     return pathname and os.access(pathname, os.X_OK)
-
-
-def wait_for_termination(process, timeout):
-    """
-    Wait for a process to terminate or the timeout to expire.
-
-    Several tests involve ``SIGTERM`` and/or ``SIGKILL`` signals and verify
-    that the process terminates as expected, however process termination is
-    never actually instantaneous. In order to create a robust test suite we
-    need to wait for processes to terminate (with a timeout).
-    """
-    timer = Timer()
-    while process.is_alive and timer.elapsed_time < timeout:
-        time.sleep(0.1)
 
 
 def race_condition_manager(shutdown_event):

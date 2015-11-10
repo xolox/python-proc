@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 9, 2015
+# Last Change: November 10, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -21,11 +21,10 @@ module.
 # Standard library modules.
 import logging
 import os
-import signal
 import time
 
 # External dependencies.
-from executor import which, quote
+from executor import ControllableProcess, which
 from property_manager import lazy_property
 
 # Initialize a logger.
@@ -37,7 +36,7 @@ logger = logging.getLogger(__name__)
 num_race_conditions = dict(stat=0, cmdline=0)
 
 
-class Process(object):
+class Process(ControllableProcess):
 
     """
     Process information based on ``/proc/[pid]/stat`` and similar files.
@@ -140,8 +139,16 @@ class Process(object):
         :param stat_fields: The tokenized fields from ``/proc/[pid]/stat`` (a
                             list of strings).
         """
+        # Initialize the superclass.
+        super(Process, self).__init__(logger=logger)
+        # Initialize instance variables.
         self.proc_tree = proc_tree
         self.stat_fields = stat_fields
+        # Define aliases for two methods that were renamed when the
+        # ControllableProcess class was extracted from the proc
+        # package and moved to the executor package.
+        self.cont = self.resume
+        self.stop = self.suspend
 
     def __repr__(self):
         """
@@ -514,6 +521,17 @@ class Process(object):
         return self.comm
 
     @property
+    def is_running(self):
+        """
+        An alias for :attr:`is_alive`.
+
+        This alias makes :class:`~executor.ControllableProcess` objects aware
+        of zombie_ processes so that e.g. killing of a zombie process doesn't
+        hang indefinitely (waiting for a zombie that will never die).
+        """
+        return self.is_alive
+
+    @property
     def is_alive(self):
         """
         ``True`` if the process is still alive, ``False`` otherwise.
@@ -527,67 +545,6 @@ class Process(object):
         """
         stat_fields = parse_process_status(self.proc_tree, silent=True)
         return bool(stat_fields and stat_fields[2] != 'Z')
-
-    def stop(self):
-        """
-        Stop a process for later resumption.
-
-        This sends a SIGSTOP_ signal to the process. This signal cannot be
-        intercepted or ignored.
-
-        See also :attr:`is_alive`, :func:`cont()`, :func:`terminate()`
-        and :func:`kill()`.
-
-        .. _SIGSTOP: http://en.wikipedia.org/wiki/Unix_signal#SIGSTOP
-        """
-        logger.info("Suspending process id %i (%s) ..", self.pid, quote(self.cmdline))
-        os.kill(self.pid, signal.SIGSTOP)
-
-    def cont(self):
-        """
-        Continue (restart) a process that was previously paused using :func:`stop()`.
-
-        This sends a SIGCONT_ signal to the process. This signal cannot be
-        intercepted or ignored.
-
-        See also :attr:`is_alive`, :func:`stop()`, :func:`terminate()`
-        and :func:`kill()`.
-
-        .. _SIGCONT: http://en.wikipedia.org/wiki/Unix_signal#SIGCONT
-        """
-        logger.info("Resuming process id %i (%s) ..", self.pid, quote(self.cmdline))
-        os.kill(self.pid, signal.SIGCONT)
-
-    def terminate(self):
-        """
-        Request the (graceful) termination of the process.
-
-        This sends a SIGTERM_ signal to the process. Processes are allowed to
-        intercept this signal to allow for graceful termination (releasing
-        resources, saving state).
-
-        See also :attr:`is_alive`, :func:`stop()`, :func:`cont()` and
-        :func:`kill()`.
-
-        .. _SIGTERM: http://en.wikipedia.org/wiki/Unix_signal#SIGTERM
-        """
-        logger.info("Gracefully terminating process id %i (%s) ..", self.pid, quote(self.cmdline))
-        os.kill(self.pid, signal.SIGTERM)
-
-    def kill(self):
-        """
-        Immediately (non gracefully) terminate the process.
-
-        This sends a SIGKILL_ signal to the process. This signal cannot be
-        intercepted or ignored.
-
-        See also :attr:`is_alive`, :func:`stop()`, :func:`cont()` and
-        :func:`terminate()`.
-
-        .. _SIGKILL: http://en.wikipedia.org/wiki/Unix_signal#SIGKILL
-        """
-        logger.info("Forcefully terminating process id %i (%s) ..", self.pid, quote(self.cmdline))
-        os.kill(self.pid, signal.SIGKILL)
 
 
 def find_processes(obj_type=Process):

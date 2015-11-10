@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 9, 2015
+# Last Change: November 10, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -72,7 +72,6 @@ class ProcessNode(Process):
         Based on the :attr:`~proc.core.Process.ppid` attribute. ``None`` when
         the process doesn't have a parent.
         """
-        return None
 
     @lazy_property
     def children(self):

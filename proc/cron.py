@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 25, 2015
+# Last Change: November 10, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -129,7 +129,7 @@ def cron_graceful(arguments):
     else:
         if not dry_run:
             # Prevent the cron daemon from starting new cron jobs.
-            cron_daemon.stop()
+            cron_daemon.suspend()
             # Enable user defined additional logic.
             run_additions()
         # Identify the running cron jobs based on the process tree _after_ the
