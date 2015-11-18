@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 10, 2015
+# Last Change: November 18, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -317,11 +317,7 @@ class Process(ControllableProcess):
 
         .. _epoch: http://en.wikipedia.org/wiki/Unix_time
         """
-        with open('/proc/uptime') as handle:
-            contents = handle.read()
-            fields = contents.split()
-            system_uptime = float(fields[0])
-        system_boot = time.time() - system_uptime
+        system_boot = time.time() - find_system_uptime()
         ticks_after_boot = int(self.stat_fields[21])
         seconds_after_boot = ticks_after_boot / float(os.sysconf('SC_CLK_TCK'))
         return system_boot + seconds_after_boot
@@ -582,6 +578,20 @@ def find_processes(obj_type=Process):
                 num_processes += 1
                 yield process
     logger.debug("Finished scanning %r, found %i processes.", root, num_processes)
+
+
+def find_system_uptime():
+    """
+    Find the system's uptime.
+
+    :returns: The uptime in seconds (a float).
+
+    This function returns the first number found in ``/proc/uptime``.
+    """
+    with open('/proc/uptime') as handle:
+        contents = handle.read()
+        fields = contents.split()
+        return float(fields[0])
 
 
 def sorted_by_pid(processes):
