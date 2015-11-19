@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Global counters to track the number of detected race conditions. This is only
 # useful for the test suite, because I want the test suite to create race
 # conditions and verify that they are properly handled.
-num_race_conditions = dict(cmdline=0, exe=0, stat=0)
+num_race_conditions = dict(cmdline=0, environ=0, exe=0, stat=0)
 
 
 class Process(ControllableProcess):
@@ -374,17 +374,6 @@ class Process(ControllableProcess):
         """
         return int(self.stat_fields[23]) * os.sysconf('SC_PAGESIZE')
 
-    @property
-    def command_line(self):
-        """
-        Alias for :attr:`cmdline`.
-
-        This alias exists so that :class:`~executor.ControllableProcess` can
-        log process ids and command lines (this helps to make the log output
-        more human friendly).
-        """
-        return self.cmdline
-
     @lazy_property
     def cmdline(self):
         """
@@ -432,6 +421,43 @@ class Process(ControllableProcess):
                    (25103, '/usr/sbin/nginx')]
         """
         return parse_process_cmdline(self.proc_tree)
+
+    @property
+    def command_line(self):
+        """
+        Alias for :attr:`cmdline`.
+
+        This alias exists so that :class:`~executor.ControllableProcess` can
+        log process ids and command lines (this helps to make the log output
+        more human friendly).
+        """
+        return self.cmdline
+
+    @lazy_property
+    def environ(self):
+        """
+        The environment of the process (a dictionary with string key/value pairs).
+
+        **Availability:**
+
+        - This property is parsed from the contents of ``/proc/[pid]/environ``
+          the first time it is referenced, after that its value is cached so it
+          will always be available.
+
+        - If this property is first referenced after the process turns into a
+          zombie_ or the process ends then it's too late to read the contents
+          of ``/proc/[pid]/environ`` and an empty dictionary is returned.
+        """
+        variables = {}
+        with ProtectedAccess('environ', "read process environment"):
+            with open(os.path.join(self.proc_tree, 'environ')) as handle:
+                contents = handle.read()
+            if contents:
+                for token in contents.split('\0'):
+                    name, _, value = token.partition('=')
+                    if name:
+                        variables[name] = value
+        return variables
 
     @lazy_property
     def exe(self):

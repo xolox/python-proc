@@ -12,6 +12,7 @@ The following modules are based on the modules above:
 
 - :mod:`proc.apache`
 - :mod:`proc.cron`
+- :mod:`proc.notify`
 
 These modules are meant to actually be used (for those who are interested in
 them) but they also function as examples of how to use the :mod:`proc.core`
@@ -45,4 +46,10 @@ The :mod:`proc.cron` module
 ---------------------------
 
 .. automodule:: proc.cron
+   :members:
+
+The :mod:`proc.notify` module
+-----------------------------
+
+.. automodule:: proc.notify
    :members:

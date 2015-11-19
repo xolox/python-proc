@@ -3,7 +3,7 @@
 """Setup script for the `proc` package."""
 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 10, 2015
+# Last Change: November 19, 2015
 # URL: https://proc.readthedocs.org
 
 # Standard library modules.
@@ -40,7 +40,8 @@ setup(
     author_email='peter@peterodding.com',
     packages=find_packages(),
     entry_points=dict(console_scripts=[
-        'cron-graceful = proc.cron:main'
+        'cron-graceful = proc.cron:main',
+        'notify-send-headless = proc.notify:main',
     ]),
     test_suite='proc.tests',
     install_requires=[

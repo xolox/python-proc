@@ -23,6 +23,6 @@ The second part of the documentation is the API documentation, based on version
 documentation:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    api.rst

@@ -16,17 +16,19 @@ import subprocess
 import time
 import unittest
 
+from pprint import pformat
+
 # External dependencies.
 import coloredlogs
-
-# Modules included in our package.
 from executor import ExternalCommand, which
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
-from pprint import pformat
+
+# Modules included in our package.
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import find_processes, num_race_conditions, Process
 from proc.cron import cron_graceful, wait_for_processes
+from proc.notify import main as notify_headless, find_environment_variables
 from proc.tree import get_process_tree
 
 # Initialize a logger.
@@ -108,6 +110,22 @@ class ProcTestCase(unittest.TestCase):
             child.terminate(timeout=10)
             # Make sure the process object agrees the child is dead.
             assert not process.is_alive, "Child is still alive even though we killed it?!"
+
+    def test_environ(self):
+        """Test that parsing of process environments works as expected."""
+        unique_value = str(random.random())
+        with ExternalCommand('sleep', '30', environment=dict(unique_value=unique_value)) as sleep_cmd:
+            sleep_proc = Process.from_pid(sleep_cmd.pid)
+            assert sleep_proc.environ['unique_value'] == unique_value
+
+    def test_find_environment_variables(self):
+        """Test that :func:`proc.notify.find_environment_variables()` works correctly."""
+        unique_name = 'PROC_TEST_SUITE'
+        unique_value = str(random.random())
+        with ExternalCommand('sleep', '30', environment={unique_name: unique_value}) as sleep_cmd:
+            matches = find_environment_variables(unique_name)
+            assert matches, "No variables matched?!"
+            assert matches[unique_name] == unique_value
 
     def test_exe_path_fallback(self):
         """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
@@ -216,14 +234,15 @@ class ProcTestCase(unittest.TestCase):
            ``/proc/[pid]`` no longer exists.
 
         This test intentionally creates race conditions in the reading of
-        ``/proc/[pid]/stat`` and ``/proc/[pid]/cmdline`` files, to verify that
-        the :mod:`proc.core` module never breaks on a race condition.
+        ``/proc/[pid]/stat``, ``/proc/[pid]/cmdline`` and
+        ``/proc/[pid]/environ`` files, to verify that the :mod:`proc.core`
+        module never breaks on a race condition.
 
         It works by using the :mod:`multiprocessing` module to quickly spawn
         and reclaim subprocesses while at the same time scanning through
         ``/proc`` continuously. The test times out after 60 seconds but in all
         of the runs I've tried so far it never needs more than 10 seconds to
-        encounter a handful of race conditions
+        encounter a handful of race conditions.
         """
         # Copy the race condition counters so we can verify all counters have
         # increased before we consider this test to have passed.
@@ -243,8 +262,10 @@ class ProcTestCase(unittest.TestCase):
                         # Force a time window between when /proc/[pid]/stat was
                         # read and when /proc/[pid]/cmdline will be read.
                         time.sleep(0.1)
-                        # Read /proc/[pid]/cmdline even though it may no longer exist.
+                        # Read /proc/[pid]/cmdline, /proc/[pid]/environ and
+                        # /proc/[pid]/exe even though they may no longer exist.
                         assert isinstance(process.cmdline, list)
+                        assert isinstance(process.environ, dict)
                         assert isinstance(process.exe, basestring)
                 # Check whether race conditions have been handled.
                 if all(num_race_conditions[k] > at_start[k] for k in at_start):
