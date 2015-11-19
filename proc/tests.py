@@ -1,20 +1,10 @@
 # Automated tests for the `proc' package.
 #
-# Author: Peter Odding <peter.odding@paylogic.com>
-# Last Change: November 10, 2015
-# URL: https://py2deb.readthedocs.org
+# Author: Peter Odding <peter@peterodding.com>
+# Last Change: November 19, 2015
+# URL: https://proc.readthedocs.org
 
-"""
-The :mod:`py2deb.tests` module contains the automated tests for `py2deb`.
-
-The makefile in the py2deb git repository uses pytest_ to run the test suite
-because of pytest's great error reporting. Nevertheless the test suite is
-written to be compatible with the :mod:`unittest` module (part of Python's
-standard library) so that the test suite can be run without additional external
-dependencies.
-
-.. _pytest: http://pytest.org/latest/goodpractises.html
-"""
+"""Test suite for the `proc` package."""
 
 # Standard library modules.
 import logging
@@ -32,6 +22,7 @@ import coloredlogs
 # Modules included in our package.
 from executor import ExternalCommand, which
 from humanfriendly import parse_size, Timer
+from humanfriendly.compat import basestring
 from pprint import pformat
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import find_processes, num_race_conditions, Process
@@ -254,6 +245,7 @@ class ProcTestCase(unittest.TestCase):
                         time.sleep(0.1)
                         # Read /proc/[pid]/cmdline even though it may no longer exist.
                         assert isinstance(process.cmdline, list)
+                        assert isinstance(process.exe, basestring)
                 # Check whether race conditions have been handled.
                 if all(num_race_conditions[k] > at_start[k] for k in at_start):
                     # The test has passed: We were able to simulate at least

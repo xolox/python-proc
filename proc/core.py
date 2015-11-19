@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 18, 2015
+# Last Change: November 19, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -19,6 +19,7 @@ module.
 """
 
 # Standard library modules.
+import errno
 import logging
 import os
 import time
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Global counters to track the number of detected race conditions. This is only
 # useful for the test suite, because I want the test suite to create race
 # conditions and verify that they are properly handled.
-num_race_conditions = dict(stat=0, cmdline=0)
+num_race_conditions = dict(cmdline=0, exe=0, stat=0)
 
 
 class Process(ControllableProcess):
@@ -444,17 +445,17 @@ class Process(ControllableProcess):
           that its value is cached so it will always be available.
 
         - If this property is referenced after the process has ended then it's
-          too late to dereference the symbolic link and ``None`` is returned.
+          too late to dereference the symbolic link and an empty string is
+          returned.
 
         - If an exception is encountered while dereferencing the symbolic link
           (for example because you don't have permission to dereference the
           symbolic link) the exception is swallowed and an empty string is
           returned.
         """
-        try:
+        with ProtectedAccess('exe', "dereference executable path"):
             return os.readlink(os.path.join(self.proc_tree, 'exe'))
-        except Exception:
-            return ''
+        return ''
 
     @lazy_property
     def exe_path(self):
@@ -614,51 +615,42 @@ def parse_process_status(directory, silent=False):
               the ``/proc/[pid]/stat`` file disappears before it can be read
               (in this case a warning is logged).
     """
-    # Read the /proc/[pid]/stat file. This can raise an exception if the
-    # process ends before we can open and read the file (a race condition). In
-    # this case we'll return None to our caller.
-    pathname = os.path.join(directory, 'stat')
-    try:
-        with open(pathname) as handle:
+    with ProtectedAccess('stat', "read process status"):
+        with open(os.path.join(directory, 'stat')) as handle:
             contents = handle.read()
         # If a process ends after we've successfully opened the corresponding
         # /proc/[pid]/stat file but before we've read the file contents I'm not
         # 100% sure if a nonempty read is guaranteed, so we'll just make sure
         # we actually got a nonempty read (I'd rather err on the side of
         # caution :-).
-        assert contents
-    except Exception:
-        num_race_conditions['stat'] += 1
-        if not silent:
-            logger.warning("Failed to read process status, most likely due to a race condition! (%s)", pathname)
-        return None
-    # This comment is here to justify the gymnastics with str.partition()
-    # and str.rpartition() below:
-    #
-    # The second field in /proc/[pid]/stat (called `comm' in `man 5 proc')
-    # is the executable name. It's enclosed in parentheses and may contain
-    # spaces. Due to the very sparse documentation about this _obscure_
-    # encoding I got curious and experimented a bit:
-    #
-    # Nothing prevents an executable name from containing parentheses and
-    # because these are just arbitrary characters without any meaning they
-    # don't need to be balanced. When such an executable name is embedded in
-    # /proc/[pid]/stat no further encoding is applied, you'll just get
-    # something like '((python))'.
-    #
-    # Fortunately the `comm' field is the only field that can contain
-    # arbitrary text, so if you take the text between the left most and
-    # right most parenthesis in /proc/[pid]/stat you'll end up with the
-    # correct answer!
-    before_comm, _, remainder = contents.partition('(')
-    comm, _, after_comm = remainder.rpartition(')')
-    # Combine the tokenized fields into a list of strings. All of the
-    # fields except `comm' are integers or a single alphabetic character
-    # (the state field) so using str.split() is okay here.
-    fields = before_comm.split()
-    fields.append(comm)
-    fields.extend(after_comm.split())
-    return fields
+        if contents:
+            # This comment is here to justify the gymnastics with
+            # str.partition() and str.rpartition() below:
+            #
+            # The second field in /proc/[pid]/stat (called `comm' in `man 5
+            # proc') is the executable name. It's enclosed in parentheses and
+            # may contain spaces. Due to the very sparse documentation about
+            # this _obscure_ encoding I got curious and experimented a bit:
+            #
+            # Nothing prevents an executable name from containing parentheses
+            # and because these are just arbitrary characters without any
+            # meaning they don't need to be balanced. When such an executable
+            # name is embedded in /proc/[pid]/stat no further encoding is
+            # applied, you'll just get something like '((python))'.
+            #
+            # Fortunately the `comm' field is the only field that can contain
+            # arbitrary text, so if you take the text between the left most and
+            # right most parenthesis in /proc/[pid]/stat you'll end up with the
+            # correct answer!
+            before_comm, _, remainder = contents.partition('(')
+            comm, _, after_comm = remainder.rpartition(')')
+            # Combine the tokenized fields into a list of strings. All of the
+            # fields except `comm' are integers or a single alphabetic
+            # character (the state field) so using str.split() is okay here.
+            fields = before_comm.split()
+            fields.append(comm)
+            fields.extend(after_comm.split())
+            return fields
 
 
 def parse_process_cmdline(directory):
@@ -671,17 +663,10 @@ def parse_process_cmdline(directory):
               ``/proc/[pid]/cmdline`` file disappears before it can be read an
               empty list is returned (in this case a warning is logged).
     """
-    # Read the /proc/[pid]/cmdline file. This can raise an exception if the
-    # process ends before we can open and read the file (a race condition). In
-    # this case we'll return None to our caller.
-    pathname = os.path.join(directory, 'cmdline')
-    try:
-        with open(pathname) as handle:
+    contents = ''
+    with ProtectedAccess('cmdline', "read process command line"):
+        with open(os.path.join(directory, 'cmdline')) as handle:
             contents = handle.read()
-    except Exception:
-        num_race_conditions['cmdline'] += 1
-        logger.warning("Failed to read process command line, most likely due to a race condition! (%s)", pathname)
-        contents = ''
     # Strip the trailing null byte so we don't report every command line with a
     # trailing empty string (our callers should not be bothered with obscure
     # details about the encoding of /proc/[pid]/cmdline).
@@ -691,3 +676,42 @@ def parse_process_cmdline(directory):
     # containing a single empty string. This is an incorrect representation of
     # a parsed command line so we explicitly guard against this.
     return contents.split('\0') if contents else []
+
+
+class ProtectedAccess(object):
+
+    """Context manager that deals with permission errors and race conditions."""
+
+    def __init__(self, key, action):
+        """
+        Initialize a :class:`ProtectedAccess` object.
+
+        :param key: The key in :data:`num_race_conditions` (a string).
+        :param action: A verb followed by a noun describing what kind of access
+                       is being protected (a string)
+        """
+        self.key = key
+        self.action = action
+
+    def __enter__(self):
+        """Enter the context (does nothing)."""
+        pass
+
+    def __exit__(self, exc_type=None, exc_value=None, traceback=None):
+        """Log and swallow exceptions and count race conditions."""
+        if exc_type is not None:
+            filename = getattr(exc_value, 'filename', 'filename unknown')
+            if isinstance(exc_value, EnvironmentError):
+                if exc_value.errno == errno.EACCES:
+                    # Permission errors are silently swallowed.
+                    return True
+                if exc_value.errno == errno.ENOENT:
+                    # If the file has gone missing we consider it a race condition.
+                    logger.warning("Failed to %s due to race condition! (%s)",
+                                   self.action, filename)
+                    num_race_conditions[self.key] += 1
+                    return True
+            # Other exceptions are logged and swallowed.
+            logger.warning("Failed to %s because of unexpected exception! (%s)",
+                           self.action, filename, exc_info=True)
+        return True
