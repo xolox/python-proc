@@ -721,17 +721,20 @@ class ProtectedAccess(object):
 
     def __enter__(self):
         """Enter the context (does nothing)."""
-        pass
 
     def __exit__(self, exc_type=None, exc_value=None, traceback=None):
         """Log and swallow exceptions and count race conditions."""
         if exc_type is not None:
+            # Gotcha: On Python 2.6 when exc_type is IOError exc_value is
+            # an actual tuple instead of an exception object, hence
+            # the issubclass() and exc_value[0] gymnastics.
             filename = getattr(exc_value, 'filename', 'filename unknown')
-            if isinstance(exc_value, EnvironmentError):
-                if exc_value.errno == errno.EACCES:
+            if issubclass(exc_type, EnvironmentError):
+                error_code = getattr(exc_value, 'errno', None) or exc_value[0]
+                if error_code == errno.EACCES:
                     # Permission errors are silently swallowed.
                     return True
-                if exc_value.errno == errno.ENOENT:
+                if error_code == errno.ENOENT:
                     # If the file has gone missing we consider it a race condition.
                     logger.warning("Failed to %s due to race condition! (%s)",
                                    self.action, filename)
@@ -739,5 +742,5 @@ class ProtectedAccess(object):
                     return True
             # Other exceptions are logged and swallowed.
             logger.warning("Failed to %s because of unexpected exception! (%s)",
-                           self.action, filename, exc_info=True)
+                           self.action, filename, exc_info=(exc_type, exc_value, traceback))
         return True
