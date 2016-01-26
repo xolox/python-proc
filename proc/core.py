@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 25, 2015
+# Last Change: January 26, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -129,10 +129,7 @@ class Process(ControllableProcess):
         :returns: A process information object or ``None`` (in case the process
                   ends before its information can be read).
         """
-        directory = os.path.join('/proc', str(pid))
-        fields = parse_process_status(directory)
-        if fields:
-            return cls(directory, fields)
+        return cls.from_path(os.path.join('/proc', str(pid)))
 
     def __init__(self, proc_tree, stat_fields):
         """
