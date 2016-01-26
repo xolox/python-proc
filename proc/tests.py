@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 19, 2015
+# Last Change: January 26, 2016
 # URL: https://proc.readthedocs.org
 
 """Test suite for the `proc` package."""
@@ -28,7 +28,7 @@ from humanfriendly.compat import basestring
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import find_processes, num_race_conditions, Process
 from proc.cron import cron_graceful, wait_for_processes
-from proc.notify import main as notify_headless, find_environment_variables
+from proc.notify import find_environment_variables
 from proc.tree import get_process_tree
 
 # Initialize a logger.
@@ -122,7 +122,7 @@ class ProcTestCase(unittest.TestCase):
         """Test that :func:`proc.notify.find_environment_variables()` works correctly."""
         unique_name = 'PROC_TEST_SUITE'
         unique_value = str(random.random())
-        with ExternalCommand('sleep', '30', environment={unique_name: unique_value}) as sleep_cmd:
+        with ExternalCommand('sleep', '30', environment={unique_name: unique_value}):
             matches = find_environment_variables(unique_name)
             assert matches, "No variables matched?!"
             assert matches[unique_name] == unique_value

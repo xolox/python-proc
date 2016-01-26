@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 19, 2015
+# Last Change: November 25, 2015
 # URL: https://proc.readthedocs.org
 
 """
@@ -425,7 +425,7 @@ class Process(ControllableProcess):
     @property
     def command_line(self):
         """
-        Alias for :attr:`cmdline`.
+        An alias for the :attr:`cmdline` property.
 
         This alias exists so that :class:`~executor.ControllableProcess` can
         log process ids and command lines (this helps to make the log output
