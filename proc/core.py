@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 26, 2016
+# Last Change: January 27, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -133,7 +133,7 @@ class Process(ControllableProcess):
 
     def __init__(self, proc_tree, stat_fields):
         """
-        Construct a process information object.
+        Initialize a :class:`Process` object.
 
         :param proc_tree: The absolute pathname of the numerical subdirectory
                           of ``/proc`` on which the process information is
@@ -178,198 +178,6 @@ class Process(ControllableProcess):
             if not (optional and not value):
                 fields.append("%s=%r" % (name, value))
         return "%s(%s)" % (self.__class__.__name__, ", ".join(fields))
-
-    @lazy_property
-    def pid(self):
-        """
-        The process ID (an integer).
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-        """
-        return int(self.stat_fields[0])
-
-    @lazy_property
-    def comm(self):
-        """
-        The filename of the executable.
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-
-        The filename is not enclosed in parentheses like it is in
-        ``/proc/[pid]/stat`` because the parentheses are an implementation
-        detail of the encoding of ``/proc/[pid]/stat`` and the whole point of
-        :mod:`proc.core` is to hide ugly encoding details like this :-).
-
-        .. note:: This field can be truncated by the Linux kernel so strictly
-                  speaking you can't rely on this field unless you know that
-                  the executables you're interested in have short names. Here's
-                  an example of what I'm talking about:
-
-                  >>> from proc.core import find_processes
-                  >>> next(p for p in find_processes() if p.comm.startswith('console'))
-                  Process(pid=2753,
-                          comm='console-kit-dae',
-                          state='S',
-                          ppid=1,
-                          pgrp=1632,
-                          session=1632,
-                          vsize=2144198656,
-                          rss=733184,
-                          cmdline=['/usr/sbin/console-kit-daemon', '--no-daemon'])
-
-                  As you can see in the example above the executable name
-                  ``console-kit-daemon`` is truncated to ``console-kit-dae``.
-                  If you need a reliable way to find the executable name
-                  consider using the :attr:`cmdline` and/or :attr:`exe`
-                  properties.
-        """
-        return self.stat_fields[1]
-
-    @lazy_property
-    def state(self):
-        """
-        A single uppercase character describing the state of the process (a string).
-
-        Quoting from `man 5 proc`_:
-
-         *One character from the string "RSDZTW" where R is running, S is
-         sleeping in an interruptible wait, D is waiting in uninterruptible
-         disk sleep, Z is zombie_, T is traced or stopped (on a signal), and W
-         is paging.*
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-
-        .. _zombie: http://en.wikipedia.org/wiki/Zombie_process
-        """
-        return self.stat_fields[2]
-
-    @lazy_property
-    def ppid(self):
-        """
-        The process ID of the parent process (an integer).
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-
-        This field is zero when the process doesn't have a parent process (same
-        as in ``/proc/[pid]/stat``). Because Python treats the integer ``0`` as
-        ``False`` this field can be used as follows to find processes without a
-        parent process:
-
-        >>> from proc.core import find_processes
-        >>> pprint([p for p in find_processes() if not p.ppid])
-        [Process(pid=1, comm='init', state='S', pgrp=1, session=1, vsize=25174016, rss=1667072, cmdline=['/sbin/init']),
-         Process(pid=2, comm='kthreadd', state='S', pgrp=0, session=0, vsize=0, rss=0)]
-        """
-        return int(self.stat_fields[3])
-
-    @lazy_property
-    def pgrp(self):
-        """
-        The process group ID of the process (an integer).
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-        """
-        return int(self.stat_fields[4])
-
-    @lazy_property
-    def session(self):
-        """
-        The session ID of the process (an integer).
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-        """
-        return int(self.stat_fields[5])
-
-    @lazy_property
-    def starttime(self):
-        """
-        The time at which the process was started (a float).
-
-        Paraphrasing from `man 5 proc`_:
-
-         *The time the process started after system boot. In kernels before
-         Linux 2.6, this value was expressed in jiffies. Since Linux 2.6, the
-         value is expressed in clock ticks.*
-
-        This property translates *clock ticks* to *seconds* by dividing the
-        value extracted from ``/proc/[pid]/stat`` with the result of:
-
-        .. code-block:: python
-
-           os.sysconf('SC_CLK_TCK')
-
-        After the conversion to seconds the system's uptime is used to
-        determine the absolute start time of the process (the number of seconds
-        since the Unix epoch_).
-
-        See also the :attr:`runtime` property.
-
-        **Availability:** This property is calculated from the contents of
-        ``/proc/[pid]/stat`` and ``/proc/uptime`` and is always available.
-
-        .. _epoch: http://en.wikipedia.org/wiki/Unix_time
-        """
-        system_boot = time.time() - find_system_uptime()
-        ticks_after_boot = int(self.stat_fields[21])
-        seconds_after_boot = ticks_after_boot / float(os.sysconf('SC_CLK_TCK'))
-        return system_boot + seconds_after_boot
-
-    @property
-    def runtime(self):
-        """
-        The time in seconds since the process started (a float).
-
-        This property is calculated based on :attr:`starttime` every time
-        it's requested (so it will always be up to date).
-
-        .. warning:: The runtime will not stop growing when the process ends
-                     because doing so would require a background thread just to
-                     monitor when the process ends... This is an unfortunate
-                     side effect of the architecture of ``/proc`` -- processes
-                     disappear from ``/proc`` the moment they end so the
-                     information about when the process ended is lost!
-        """
-        return max(0, time.time() - self.starttime)
-
-    @lazy_property
-    def vsize(self):
-        """
-        The virtual memory size of the process in bytes (an integer).
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-        """
-        return int(self.stat_fields[22])
-
-    @lazy_property
-    def rss(self):
-        """
-        The resident set size of the process *in bytes* (an integer).
-
-        Quoting from `man 5 proc`_:
-
-         *Number of pages the process has in real memory. This is just the
-         pages which count toward text, data, or stack space. This does not
-         include pages which have not been demand-loaded in, or which are
-         swapped out.*
-
-        This property translates *pages* to *bytes* by multiplying the value
-        extracted from ``/proc/[pid]/stat`` with the result of:
-
-        .. code-block:: python
-
-           os.sysconf('SC_PAGESIZE')
-
-        **Availability:** This property is parsed from the contents of
-        ``/proc/[pid]/stat`` and is always available.
-        """
-        return int(self.stat_fields[23]) * os.sysconf('SC_PAGESIZE')
 
     @lazy_property
     def cmdline(self):
@@ -418,6 +226,44 @@ class Process(ControllableProcess):
                    (25103, '/usr/sbin/nginx')]
         """
         return parse_process_cmdline(self.proc_tree)
+
+    @lazy_property
+    def comm(self):
+        """
+        The filename of the executable.
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+
+        The filename is not enclosed in parentheses like it is in
+        ``/proc/[pid]/stat`` because the parentheses are an implementation
+        detail of the encoding of ``/proc/[pid]/stat`` and the whole point of
+        :mod:`proc.core` is to hide ugly encoding details like this :-).
+
+        .. note:: This field can be truncated by the Linux kernel so strictly
+                  speaking you can't rely on this field unless you know that
+                  the executables you're interested in have short names. Here's
+                  an example of what I'm talking about:
+
+                  >>> from proc.core import find_processes
+                  >>> next(p for p in find_processes() if p.comm.startswith('console'))
+                  Process(pid=2753,
+                          comm='console-kit-dae',
+                          state='S',
+                          ppid=1,
+                          pgrp=1632,
+                          session=1632,
+                          vsize=2144198656,
+                          rss=733184,
+                          cmdline=['/usr/sbin/console-kit-daemon', '--no-daemon'])
+
+                  As you can see in the example above the executable name
+                  ``console-kit-daemon`` is truncated to ``console-kit-dae``.
+                  If you need a reliable way to find the executable name
+                  consider using the :attr:`cmdline` and/or :attr:`exe`
+                  properties.
+        """
+        return self.stat_fields[1]
 
     @property
     def command_line(self):
@@ -481,42 +327,6 @@ class Process(ControllableProcess):
         return ''
 
     @lazy_property
-    def exe_path(self):
-        """
-        The absolute pathname of the executable (a string).
-
-        It can be tricky to reliably determine the pathname of the executable
-        of an arbitrary process and this property tries to make it easier. Its
-        value is based on the first of the following methods that works:
-
-        1. If :attr:`exe` is available then this pathname is returned.
-
-           - Pro: This method provides the most reliable way to determine the
-             absolute pathname of the executed command because (as far as I
-             know) it always provides an absolute pathname.
-           - Con: This method can fail because you don't have permission to
-             dereference the ``/proc/[pid]/exe`` symbolic link.
-
-        2. If the first string in :attr:`cmdline` contains the absolute
-           pathname of an executable file then this pathname is returned.
-
-           - Pro: This method doesn't require the same permissions that method
-             one requires.
-           - Con: This method can fail because a process has changed its own
-             command line (after it was started) or because the first string in
-             the command line isn't an absolute pathname.
-
-        3. If both of the methods above fail an empty string is returned.
-        """
-        if self.exe:
-            return self.exe
-        if self.cmdline:
-            name = self.cmdline[0]
-            if os.path.isabs(name) and os.access(name, os.X_OK):
-                return name
-        return ''
-
-    @lazy_property
     def exe_name(self):
         """
         The base name of the executable (a string).
@@ -555,6 +365,57 @@ class Process(ControllableProcess):
                 return name
         return self.comm
 
+    @lazy_property
+    def exe_path(self):
+        """
+        The absolute pathname of the executable (a string).
+
+        It can be tricky to reliably determine the pathname of the executable
+        of an arbitrary process and this property tries to make it easier. Its
+        value is based on the first of the following methods that works:
+
+        1. If :attr:`exe` is available then this pathname is returned.
+
+           - Pro: This method provides the most reliable way to determine the
+             absolute pathname of the executed command because (as far as I
+             know) it always provides an absolute pathname.
+           - Con: This method can fail because you don't have permission to
+             dereference the ``/proc/[pid]/exe`` symbolic link.
+
+        2. If the first string in :attr:`cmdline` contains the absolute
+           pathname of an executable file then this pathname is returned.
+
+           - Pro: This method doesn't require the same permissions that method
+             one requires.
+           - Con: This method can fail because a process has changed its own
+             command line (after it was started) or because the first string in
+             the command line isn't an absolute pathname.
+
+        3. If both of the methods above fail an empty string is returned.
+        """
+        if self.exe:
+            return self.exe
+        if self.cmdline:
+            name = self.cmdline[0]
+            if os.path.isabs(name) and os.access(name, os.X_OK):
+                return name
+        return ''
+
+    @property
+    def is_alive(self):
+        """
+        :data:`True` if the process is still alive, :data:`False` otherwise.
+
+        This property reads the ``/proc/[pid]/stat`` file each time the
+        property is referenced to make sure that the process still exists and
+        has not turned into a zombie_ process.
+
+        See also :func:`stop()`, :func:`cont()`, :func:`terminate()`
+        and :func:`kill()`.
+        """
+        stat_fields = parse_process_status(self.proc_tree, silent=True)
+        return bool(stat_fields and stat_fields[2] != 'Z')
+
     @property
     def is_running(self):
         """
@@ -566,20 +427,159 @@ class Process(ControllableProcess):
         """
         return self.is_alive
 
+    @lazy_property
+    def pgrp(self):
+        """
+        The process group ID of the process (an integer).
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+        """
+        return int(self.stat_fields[4])
+
+    @lazy_property
+    def pid(self):
+        """
+        The process ID (an integer).
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+        """
+        return int(self.stat_fields[0])
+
+    @lazy_property
+    def ppid(self):
+        """
+        The process ID of the parent process (an integer).
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+
+        This field is zero when the process doesn't have a parent process (same
+        as in ``/proc/[pid]/stat``). Because Python treats the integer 0 as
+        :data:`False` this field can be used as follows to find processes
+        without a parent process:
+
+        >>> from proc.core import find_processes
+        >>> pprint([p for p in find_processes() if not p.ppid])
+        [Process(pid=1, comm='init', state='S', pgrp=1, session=1, vsize=25174016, rss=1667072, cmdline=['/sbin/init']),
+         Process(pid=2, comm='kthreadd', state='S', pgrp=0, session=0, vsize=0, rss=0)]
+        """
+        return int(self.stat_fields[3])
+
+    @lazy_property
+    def rss(self):
+        """
+        The resident set size of the process *in bytes* (an integer).
+
+        Quoting from `man 5 proc`_:
+
+         *Number of pages the process has in real memory. This is just the
+         pages which count toward text, data, or stack space. This does not
+         include pages which have not been demand-loaded in, or which are
+         swapped out.*
+
+        This property translates *pages* to *bytes* by multiplying the value
+        extracted from ``/proc/[pid]/stat`` with the result of:
+
+        .. code-block:: python
+
+           os.sysconf('SC_PAGESIZE')
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+        """
+        return int(self.stat_fields[23]) * os.sysconf('SC_PAGESIZE')
+
     @property
-    def is_alive(self):
+    def runtime(self):
         """
-        ``True`` if the process is still alive, ``False`` otherwise.
+        The time in seconds since the process started (a float).
 
-        This property reads the ``/proc/[pid]/stat`` file each time the
-        property is referenced to make sure that the process still exists and
-        has not turned into a zombie_ process.
+        This property is calculated based on :attr:`starttime` every time
+        it's requested (so it will always be up to date).
 
-        See also :func:`stop()`, :func:`cont()`, :func:`terminate()`
-        and :func:`kill()`.
+        .. warning:: The runtime will not stop growing when the process ends
+                     because doing so would require a background thread just to
+                     monitor when the process ends... This is an unfortunate
+                     side effect of the architecture of ``/proc`` -- processes
+                     disappear from ``/proc`` the moment they end so the
+                     information about when the process ended is lost!
         """
-        stat_fields = parse_process_status(self.proc_tree, silent=True)
-        return bool(stat_fields and stat_fields[2] != 'Z')
+        return max(0, time.time() - self.starttime)
+
+    @lazy_property
+    def session(self):
+        """
+        The session ID of the process (an integer).
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+        """
+        return int(self.stat_fields[5])
+
+    @lazy_property
+    def starttime(self):
+        """
+        The time at which the process was started (a float).
+
+        Paraphrasing from `man 5 proc`_:
+
+         *The time the process started after system boot. In kernels before
+         Linux 2.6, this value was expressed in jiffies. Since Linux 2.6, the
+         value is expressed in clock ticks.*
+
+        This property translates *clock ticks* to *seconds* by dividing the
+        value extracted from ``/proc/[pid]/stat`` with the result of:
+
+        .. code-block:: python
+
+           os.sysconf('SC_CLK_TCK')
+
+        After the conversion to seconds the system's uptime is used to
+        determine the absolute start time of the process (the number of seconds
+        since the Unix epoch_).
+
+        See also the :attr:`runtime` property.
+
+        **Availability:** This property is calculated from the contents of
+        ``/proc/[pid]/stat`` and ``/proc/uptime`` and is always available.
+
+        .. _epoch: http://en.wikipedia.org/wiki/Unix_time
+        """
+        system_boot = time.time() - find_system_uptime()
+        ticks_after_boot = int(self.stat_fields[21])
+        seconds_after_boot = ticks_after_boot / float(os.sysconf('SC_CLK_TCK'))
+        return system_boot + seconds_after_boot
+
+    @lazy_property
+    def state(self):
+        """
+        A single uppercase character describing the state of the process (a string).
+
+        Quoting from `man 5 proc`_:
+
+         *One character from the string "RSDZTW" where R is running, S is
+         sleeping in an interruptible wait, D is waiting in uninterruptible
+         disk sleep, Z is zombie_, T is traced or stopped (on a signal), and W
+         is paging.*
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+
+        .. _zombie: http://en.wikipedia.org/wiki/Zombie_process
+        """
+        return self.stat_fields[2]
+
+    @lazy_property
+    def vsize(self):
+        """
+        The virtual memory size of the process in bytes (an integer).
+
+        **Availability:** This property is parsed from the contents of
+        ``/proc/[pid]/stat`` and is always available.
+        """
+        return int(self.stat_fields[22])
 
 
 def find_processes(obj_type=Process):
