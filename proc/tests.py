@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 26, 2016
+# Last Change: January 27, 2016
 # URL: https://proc.readthedocs.org
 
 """Test suite for the `proc` package."""
@@ -267,6 +267,7 @@ class ProcTestCase(unittest.TestCase):
                         assert isinstance(process.cmdline, list)
                         assert isinstance(process.environ, dict)
                         assert isinstance(process.exe, basestring)
+                        assert isinstance(process.status_fields, dict)
                 # Check whether race conditions have been handled.
                 if all(num_race_conditions[k] > at_start[k] for k in at_start):
                     # The test has passed: We were able to simulate at least

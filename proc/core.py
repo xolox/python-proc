@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Global counters to track the number of detected race conditions. This is only
 # useful for the test suite, because I want the test suite to create race
 # conditions and verify that they are properly handled.
-num_race_conditions = dict(cmdline=0, environ=0, exe=0, stat=0)
+num_race_conditions = dict(cmdline=0, environ=0, exe=0, stat=0, status=0)
 
 
 class Process(ControllableProcess):
@@ -570,6 +570,41 @@ class Process(ControllableProcess):
         .. _zombie: http://en.wikipedia.org/wiki/Zombie_process
         """
         return self.stat_fields[2]
+
+    @lazy_property
+    def status_fields(self):
+        """
+        Detailed process information (a dictionary with string key/value pairs).
+
+        The dictionaries constructed by this property are based on the contents
+        of ``/proc/[pid]/status``, which `man 5 proc`_ describes as follows:
+
+         *Provides much of the information in ``/proc/[pid]/stat`` and
+         ``/proc/[pid]/statm`` in a format that's easier for humans to parse.*
+
+        While it's true that there is quite a lot of overlap between
+        ``/proc/[pid]/stat`` and ``/proc/[pid]/status``, the latter also
+        exposes important information that isn't available elsewhere:
+
+        - TODO Add a list of attributes based on :attr:`status_fields`.
+
+        **Availability:**
+
+        - This property is parsed from the contents of ``/proc/[pid]/status``
+          the first time it is referenced, after that its value is cached so it
+          will always be available.
+
+        - If this property is first referenced after the process turns into a
+          zombie_ or the process ends then it's too late to read the contents
+          of ``/proc/[pid]/status`` and an empty dictionary is returned.
+        """
+        fields = {}
+        with ProtectedAccess('status', "read detailed process status"):
+            with open(os.path.join(self.proc_tree, 'status')) as handle:
+                for line in handle:
+                    name, _, value = line.partition(':')
+                    fields[name] = value.strip()
+        return fields
 
     @lazy_property
     def vsize(self):
