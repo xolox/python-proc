@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 10, 2015
+# Last Change: January 27, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -88,7 +88,6 @@ import getopt
 import logging
 import logging.handlers
 import os
-import socket
 import sys
 import textwrap
 
@@ -110,7 +109,7 @@ execute = functools.partial(execute, logger=logger)
 
 def main():
     """Wrapper for :func:`cron_graceful()` that feeds it :data:`sys.argv`."""
-    coloredlogs.install()
+    coloredlogs.install(syslog=True)
     cron_graceful(sys.argv[1:])
 
 
@@ -121,7 +120,6 @@ def cron_graceful(arguments):
     dry_run = parse_arguments(arguments)
     if not dry_run:
         ensure_root_privileges()
-    initialize_system_logging()
     try:
         cron_daemon = find_cron_daemon()
     except CronDaemonNotRunning:
@@ -225,24 +223,6 @@ def ensure_root_privileges():
     if os.getuid() != 0:
         sys.stderr.write("Error: Please run this command as root!\n")
         sys.exit(1)
-
-
-def initialize_system_logging():
-    """
-    Initialize logging to ``/var/log/syslog``.
-    """
-    try:
-        handler = logging.handlers.SysLogHandler(address='/dev/log')
-        # The colon in the following log format allows rsyslogd to extract the
-        # $programname from each log message, which in turn allows to filter
-        # these log messages to a separate log file.
-        handler.setFormatter(logging.Formatter('cron-graceful[%(process)d]: %(levelname)s %(message)s'))
-        # Add the syslog handler to the root logger so that the output of all
-        # loggers ends up in syslog.
-        logging.getLogger().addHandler(handler)
-    except socket.error:
-        logger.warning("Failed to initialize syslog handler, probably the syslog daemon isn't running!"
-                       " (will continue logging to stderr)")
 
 
 def find_cron_daemon():

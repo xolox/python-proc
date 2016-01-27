@@ -27,7 +27,7 @@ from humanfriendly.compat import basestring
 # Modules included in our package.
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import find_processes, num_race_conditions, Process
-from proc.cron import cron_graceful, wait_for_processes
+from proc.cron import cron_graceful, ensure_root_privileges, wait_for_processes
 from proc.notify import find_environment_variables
 from proc.tree import get_process_tree
 
@@ -213,8 +213,15 @@ class ProcTestCase(unittest.TestCase):
         self.assertRaises(SystemExit, cron_graceful, ['--help'])
         # Test that invalid command line options raise an error.
         self.assertRaises(SystemExit, cron_graceful, ['--whatever'])
-        # Test that the other command line options are accepted and test that a
-        # dry run of cron-graceful runs successfully.
+        # Test that root privileges are ensured.
+        if os.getuid() == 0:
+            # This shouldn't do anything.
+            ensure_root_privileges()
+        else:
+            # This is expected to use sys.exit(1).
+            self.assertRaises(SystemExit, ensure_root_privileges)
+        # Test that command line options for verbosity control are accepted and
+        # that a dry run of cron-graceful runs successfully.
         cron_graceful(['-q', '--quiet', '-v', '--verbose', '-n', '--dry-run'])
 
     def test_race_conditions(self, timeout=60):
