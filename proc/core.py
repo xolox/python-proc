@@ -19,6 +19,7 @@ module.
 """
 
 # Standard library modules.
+import collections
 import errno
 import logging
 import os
@@ -401,6 +402,16 @@ class Process(ControllableProcess):
                 return name
         return ''
 
+    @lazy_property
+    def group_ids(self):
+        """
+        The real, effective, saved set, and filesystem GIDs of the process (an :class:`OwnerIDs` object).
+
+        **Availability:** Refer to :attr:`status_fields`. :data:`None` is
+        returned if :attr:`status_fields` is unavailable.
+        """
+        return self._parse_ids('Gid')
+
     @property
     def is_alive(self):
         """
@@ -584,9 +595,8 @@ class Process(ControllableProcess):
 
         While it's true that there is quite a lot of overlap between
         ``/proc/[pid]/stat`` and ``/proc/[pid]/status``, the latter also
-        exposes important information that isn't available elsewhere:
-
-        - TODO Add a list of attributes based on :attr:`status_fields`.
+        exposes important information that isn't available elsewhere (e.g.
+        :attr:`user_ids` and :attr:`group_ids`).
 
         **Availability:**
 
@@ -607,6 +617,16 @@ class Process(ControllableProcess):
         return fields
 
     @lazy_property
+    def user_ids(self):
+        """
+        The real, effective, saved set, and filesystem UIDs of the process (an :class:`OwnerIDs` object).
+
+        **Availability:** Refer to :attr:`status_fields`. :data:`None` is
+        returned if :attr:`status_fields` is unavailable.
+        """
+        return self._parse_ids('Uid')
+
+    @lazy_property
     def vsize(self):
         """
         The virtual memory size of the process in bytes (an integer).
@@ -615,6 +635,23 @@ class Process(ControllableProcess):
         ``/proc/[pid]/stat`` and is always available.
         """
         return int(self.stat_fields[22])
+
+    def _parse_ids(self, field_name):
+        """Helper for :attr:`user_ids` and :attr:`group_ids`."""
+        raw_value = self.status_fields.get(field_name, '')
+        parsed_values = [int(n) for n in raw_value.split()]
+        if len(parsed_values) >= 4:
+            return OwnerIDs(*parsed_values[:4])
+
+
+class OwnerIDs(collections.namedtuple('OwnerIDs', 'real, effective, saved, fs')):
+
+    """
+    A set of user or group IDs found in ``/proc/[pid]/status``.
+
+    :class:`OwnerIDs` objects are named tuples containing four integer numbers
+    called `real`, `effective`, `saved` and `fs`.
+    """
 
 
 def find_processes(obj_type=Process):

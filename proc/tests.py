@@ -67,6 +67,8 @@ class ProcTestCase(unittest.TestCase):
         assert process.pid == os.getpid(), "Unexpected process ID!"
         assert process.ppid == os.getppid(), "Unexpected parent process ID!"
         assert process.pgrp == os.getpgrp(), "Unexpected process group ID!"
+        assert process.user_ids.real == os.getuid(), "Unexpected real user ID!"
+        assert process.group_ids.real == os.getgid(), "Unexpected real group ID!"
         # The following tests are based on common sense, here's hoping they
         # don't bite me in the ass later on :-).
         assert process.state == 'R', "Unexpected process state!"
