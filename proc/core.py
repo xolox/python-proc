@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 27, 2016
+# Last Change: January 29, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -21,8 +21,10 @@ module.
 # Standard library modules.
 import collections
 import errno
+import grp
 import logging
 import os
+import pwd
 import time
 
 # External dependencies.
@@ -403,6 +405,16 @@ class Process(ControllableProcess):
         return ''
 
     @lazy_property
+    def group(self):
+        """
+        The name of the real group ID (a string).
+
+        **Availability:** Refer to :attr:`group_ids`. :data:`None` is returned
+        if :attr:`group_ids` is unavailable or :func:`gid_to_name()` fails.
+        """
+        return gid_to_name(self.group_ids.real) if self.group_ids else None
+
+    @lazy_property
     def group_ids(self):
         """
         The real, effective, saved set, and filesystem GIDs of the process (an :class:`OwnerIDs` object).
@@ -617,6 +629,16 @@ class Process(ControllableProcess):
         return fields
 
     @lazy_property
+    def user(self):
+        """
+        The username of the real user ID (a string).
+
+        **Availability:** Refer to :attr:`user_ids`. :data:`None` is returned
+        if :attr:`user_ids` is unavailable or :func:`uid_to_name()` fails.
+        """
+        return uid_to_name(self.user_ids.real) if self.user_ids else None
+
+    @lazy_property
     def user_ids(self):
         """
         The real, effective, saved set, and filesystem UIDs of the process (an :class:`OwnerIDs` object).
@@ -771,6 +793,34 @@ def parse_process_cmdline(directory):
     # containing a single empty string. This is an incorrect representation of
     # a parsed command line so we explicitly guard against this.
     return contents.split('\0') if contents else []
+
+
+def uid_to_name(uid):
+    """
+    Find the username associated with a user ID.
+
+    :param uid: The user ID (an integer).
+    :returns: The username (a string) or :data:`None` if :func:`pwd.getpwuid()`
+              fails to locate a user for the given ID.
+    """
+    try:
+        return pwd.getpwuid(uid).pw_name
+    except Exception:
+        return None
+
+
+def gid_to_name(gid):
+    """
+    Find the group name associated with a group ID.
+
+    :param gid: The group ID (an integer).
+    :returns: The group name (a string) or :data:`None` if :func:`grp.getgrgid()`
+              fails to locate a group for the given ID.
+    """
+    try:
+        return grp.getgrgid(gid).gr_name
+    except Exception:
+        return None
 
 
 class ProtectedAccess(object):

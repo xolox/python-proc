@@ -1,12 +1,13 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 27, 2016
+# Last Change: January 29, 2016
 # URL: https://proc.readthedocs.org
 
 """Test suite for the `proc` package."""
 
 # Standard library modules.
+import getpass
 import logging
 import multiprocessing
 import operator
@@ -26,7 +27,7 @@ from humanfriendly.compat import basestring
 
 # Modules included in our package.
 from proc.apache import find_apache_memory_usage, StatsList
-from proc.core import find_processes, num_race_conditions, Process
+from proc.core import Process, find_processes, gid_to_name, num_race_conditions, uid_to_name
 from proc.cron import cron_graceful, ensure_root_privileges, wait_for_processes
 from proc.notify import find_environment_variables
 from proc.tree import get_process_tree
@@ -59,6 +60,23 @@ class ProcTestCase(unittest.TestCase):
         """Reset the logging level before every test runs."""
         coloredlogs.set_level(logging.DEBUG)
 
+    def test_uid_to_name(self):
+        """Make sure :func:`uid_to_name()` never raises exceptions."""
+        self.check_id_to_name(uid_to_name)
+
+    def test_gid_to_name(self):
+        """Make sure :func:`gid_to_name()` never raises exceptions."""
+        self.check_id_to_name(gid_to_name)
+
+    def check_id_to_name(self, fun, limit=10000):
+        """Helper for :func:`test_uid_to_name()` and :func:`test_gid_to_name()`."""
+        for i in range(limit):
+            result = fun(random.randint(0, limit))
+            if result is None:
+                # Found a missing entry without raising an exception.
+                return
+        assert False, "Failed to find unknown UID or GID?!"
+
     def test_process_from_path(self):
         """Test the :func:`proc.core.Process.from_path()` constructor."""
         process = Process.from_path('/proc/self')
@@ -69,6 +87,13 @@ class ProcTestCase(unittest.TestCase):
         assert process.pgrp == os.getpgrp(), "Unexpected process group ID!"
         assert process.user_ids.real == os.getuid(), "Unexpected real user ID!"
         assert process.group_ids.real == os.getgid(), "Unexpected real group ID!"
+        # The following assertion may fail at some point, but I chose it above
+        # using uid_to_name(os.getuid()) because the latter isn't testing
+        # anything useful at all ...
+        assert process.user == getpass.getuser(), "Unexpected username based on real user ID!"
+        # We really can't make much assumptions about the name of the real
+        # group ID so we'll just check whether it's available.
+        assert process.group, "Expected process to have real group ID with group name!"
         # The following tests are based on common sense, here's hoping they
         # don't bite me in the ass later on :-).
         assert process.state == 'R', "Unexpected process state!"
