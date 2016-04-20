@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 29, 2016
+# Last Change: April 21, 2016
 # URL: https://proc.readthedocs.org
 
 """Test suite for the `proc` package."""
@@ -22,6 +22,7 @@ from pprint import pformat
 # External dependencies.
 import coloredlogs
 from executor import ExternalCommand, which
+from executor.contexts import AbstractContext
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
 
@@ -29,7 +30,7 @@ from humanfriendly.compat import basestring
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import Process, find_processes, gid_to_name, num_race_conditions, uid_to_name
 from proc.cron import cron_graceful, ensure_root_privileges, wait_for_processes
-from proc.notify import find_environment_variables
+from proc.notify import find_graphical_context
 from proc.tree import get_process_tree
 
 # Initialize a logger.
@@ -145,14 +146,11 @@ class ProcTestCase(unittest.TestCase):
             sleep_proc = Process.from_pid(sleep_cmd.pid)
             assert sleep_proc.environ['unique_value'] == unique_value
 
-    def test_find_environment_variables(self):
-        """Test that :func:`proc.notify.find_environment_variables()` works correctly."""
-        unique_name = 'PROC_TEST_SUITE'
-        unique_value = str(random.random())
-        with ExternalCommand('sleep', '30', environment={unique_name: unique_value}):
-            matches = find_environment_variables(unique_name)
-            assert matches, "No variables matched?!"
-            assert matches[unique_name] == unique_value
+    def test_find_graphical_context(self):
+        """Test that :func:`proc.notify.find_graphical_context()` works."""
+        context = find_graphical_context()
+        assert isinstance(context, AbstractContext)
+        assert context.execute('true', check=False)
 
     def test_exe_path_fallback(self):
         """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
