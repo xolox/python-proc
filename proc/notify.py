@@ -102,9 +102,9 @@ def find_graphical_context():
         if environment:
             hashable_environment = tuple(sorted(environment.items()))
             matches[(process.user_ids.real, hashable_environment)] += 1
-    if matches:
+    ordered = sorted((counter, key) for key, counter in matches.items())
+    if ordered:
         # Pick the most popular graphical session.
-        ordered = sorted((counter, key) for key, counter in matches.items())
         counter, key = ordered[-1]
         uid, environment = key
         # Apply the user ID to the context?

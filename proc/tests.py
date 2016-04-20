@@ -30,7 +30,7 @@ from humanfriendly.compat import basestring
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import Process, find_processes, gid_to_name, num_race_conditions, uid_to_name
 from proc.cron import cron_graceful, ensure_root_privileges, wait_for_processes
-from proc.notify import find_graphical_context
+from proc.notify import find_graphical_context, notify_desktop
 from proc.tree import get_process_tree
 
 # Initialize a logger.
@@ -151,6 +151,18 @@ class ProcTestCase(unittest.TestCase):
         context = find_graphical_context()
         assert isinstance(context, AbstractContext)
         assert context.execute('true', check=False)
+
+    def test_notify_desktop(self):
+        """Test that :func:`proc.notify.notify_desktop()` works."""
+        try:
+            notify_desktop(
+                summary="Headless notifications",
+                body="They actually work!",
+                urgency='low',
+            )
+        except ExternalCommandFailed:
+            # There will never be a graphical session on Travis CI :-).
+            pass
 
     def test_exe_path_fallback(self):
         """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
