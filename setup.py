@@ -3,7 +3,7 @@
 """Setup script for the `proc` package."""
 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 29, 2016
+# Last Change: February 20, 2016
 # URL: https://proc.readthedocs.org
 
 # Standard library modules.
@@ -65,6 +65,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: System :: Operating System Kernels :: Linux',
