@@ -24,7 +24,7 @@ from pprint import pformat
 
 # External dependencies.
 import coloredlogs
-from executor import CommandNotFound, ExternalCommand, get_search_path, which
+from executor import ExternalCommand, get_search_path, which
 from executor.contexts import AbstractContext
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
@@ -157,14 +157,12 @@ class ProcTestCase(unittest.TestCase):
 
     def test_notify_desktop(self):
         """Test that :func:`proc.notify.notify_desktop()` works."""
-        try:
+        with MockProgram('notify-send'):
             notify_desktop(
                 summary="Headless notifications",
                 body="They actually work! (this message brought to you by the 'proc' test suite :-)",
                 urgency='low',
             )
-        except CommandNotFound:
-            logger.warning("notify-send-headless requires the notify-send program! (skipping test)")
 
     def test_exe_path_fallback(self):
         """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
@@ -265,38 +263,19 @@ class ProcTestCase(unittest.TestCase):
 
     def test_cron_graceful_additions(self):
         """Test :func:`proc.cron.run_additions()`."""
-        original_path = get_search_path()
-        directory = tempfile.mkdtemp()
-        try:
-            # Make only the programs in our (empty) directory available.
-            os.environ['PATH'] = directory
-            # If no program with the name cron-graceful-additions is available
-            # on the $PATH we expect this to be handled ... gracefully :-).
+        # If no program with the name cron-graceful-additions is available
+        # on the $PATH we expect this to be handled ... gracefully :-).
+        with CustomSearchPath():
             run_additions()
-            # If a program with the name cron-graceful-additions is available
-            # on the $PATH we expect it to be executed.
-            script_name = os.path.join(directory, ADDITIONS_SCRIPT_NAME)
-            signal_file = os.path.join(directory, 'hello-world')
-            with open(script_name, 'w') as handle:
-                handle.write(''.join([
-                    '#!/bin/sh\n',
-                    'echo > %s\n' % pipes.quote(signal_file),
-                ]))
-            os.chmod(script_name, 0o755)
+        # If a program with the name cron-graceful-additions is available
+        # on the $PATH we expect it to be executed successfully.
+        with MockProgram(ADDITIONS_SCRIPT_NAME):
             run_additions()
-            assert os.path.isfile(signal_file), ("Looks like %r was never run!" % ADDITIONS_SCRIPT_NAME)
-            # If the cron-graceful-additions program fails we also expect this
-            # to be handled gracefully (i.e. a message is logged but the error
-            # isn't propagated).
-            with open(script_name, 'w') as handle:
-                handle.write(''.join([
-                    '#!/bin/sh\n',
-                    'exit 1\n',
-                ]))
+        # If the cron-graceful-additions program fails we also expect this
+        # to be handled gracefully (i.e. a message is logged but the error
+        # isn't propagated).
+        with MockProgram(ADDITIONS_SCRIPT_NAME, returncode=1):
             run_additions()
-        finally:
-            os.environ['PATH'] = os.pathsep.join(original_path)
-            shutil.rmtree(directory)
 
     def test_race_conditions(self, timeout=60):
         """
@@ -436,3 +415,108 @@ class RaceConditionHelper(multiprocessing.Process):
         logger.debug("Race condition helper %i sleeping for %.2f seconds ..", os.getpid(), timeout)
         time.sleep(timeout)
         logger.debug("Race condition helper %i terminating ..", os.getpid())
+
+
+class TemporaryDirectory(object):
+
+    """
+    Easy temporary directory creation & cleanup using the :keyword:`with` statement.
+
+    Here's an example of how to use this:
+
+    .. code-block:: python
+
+       with TemporaryDirectory() as directory:
+           # Do something useful here.
+           assert os.path.isdir(directory)
+    """
+
+    def __init__(self, **options):
+        """
+        Initialize context manager that manages creation & cleanup of temporary directory.
+
+        :param options: Any keyword arguments are passed on to
+                        :func:`tempfile.mkdtemp()`.
+        """
+        self.options = options
+        self.temporary_directory = None
+
+    def __enter__(self):
+        """Create the temporary directory."""
+        if self.temporary_directory is None:
+            self.temporary_directory = tempfile.mkdtemp(**self.options)
+            logger.debug("Created temporary directory: %s", self.temporary_directory)
+        return self.temporary_directory
+
+    def __exit__(self, exc_type=None, exc_value=None, traceback=None):
+        """Destroy the temporary directory."""
+        if self.temporary_directory is not None:
+            logger.debug("Cleaning up temporary directory: %s", self.temporary_directory)
+            shutil.rmtree(self.temporary_directory)
+            self.temporary_directory = None
+
+
+class CustomSearchPath(TemporaryDirectory):
+
+    """Context manager to create an isolated executable search path."""
+
+    def __init__(self, *args, **kw):
+        """Initialize an :class:`CustomSearchPath` object."""
+        super(CustomSearchPath, self).__init__(*args, **kw)
+        self.original_search_path = None
+
+    def __enter__(self):
+        """Activate the isolated search path."""
+        directory = super(CustomSearchPath, self).__enter__()
+        self.original_search_path = os.environ.get('PATH')
+        os.environ['PATH'] = self.custom_search_path
+        return directory
+
+    def __exit__(self, *args, **kw):
+        """Deactivate the isolated search path."""
+        if self.original_search_path is not None:
+            os.environ['PATH'] = self.original_search_path
+            self.original_search_path = None
+        return super(CustomSearchPath, self).__exit__(*args, **kw)
+
+    @property
+    def custom_search_path(self):
+        """The custom search path (a string)."""
+        return self.temporary_directory
+
+
+class MockProgram(CustomSearchPath):
+
+    """Context manager to mock executables."""
+
+    def __init__(self, name, returncode=0, *args, **kw):
+        """Initialize an :class:`MockProgram` object."""
+        super(MockProgram, self).__init__(*args, **kw)
+        self.program_name = name
+        self.returncode = returncode
+        self.signal_file = None
+
+    def __enter__(self):
+        """Create the mock program."""
+        directory = super(MockProgram, self).__enter__()
+        self.signal_file = os.path.join(directory, 'signal-file')
+        pathname = os.path.join(directory, self.program_name)
+        with open(pathname, 'w') as handle:
+            handle.write('#!/bin/sh\n')
+            handle.write('echo > %s\n' % pipes.quote(self.signal_file))
+            handle.write('exit %i\n' % self.returncode)
+        os.chmod(pathname, 0o755)
+        return directory
+
+    def __exit__(self, *args, **kw):
+        """Make sure the mock program was run."""
+        try:
+            assert self.signal_file and os.path.isfile(self.signal_file), \
+                ("Looks like %r was never run!" % self.program_name)
+        finally:
+            return super(MockProgram, self).__exit__(*args, **kw)
+
+    @property
+    def custom_search_path(self):
+        """The custom search path (a string)."""
+        return os.pathsep.join([self.temporary_directory] + get_search_path())
