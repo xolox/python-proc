@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 21, 2016
+# Last Change: April 22, 2016
 # URL: https://proc.readthedocs.org
 
 """Test suite for the `proc` package."""
@@ -33,7 +33,7 @@ from humanfriendly.compat import basestring
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import Process, find_processes, gid_to_name, num_race_conditions, uid_to_name
 from proc.cron import ADDITIONS_SCRIPT_NAME, cron_graceful, ensure_root_privileges, run_additions, wait_for_processes
-from proc.notify import find_graphical_context, notify_desktop
+from proc.notify import REQUIRED_VARIABLES, find_graphical_context, notify_desktop
 from proc.tree import get_process_tree
 
 # Initialize a logger.
@@ -157,12 +157,14 @@ class ProcTestCase(unittest.TestCase):
 
     def test_notify_desktop(self):
         """Test that :func:`proc.notify.notify_desktop()` works."""
-        with MockProgram('notify-send'):
-            notify_desktop(
-                summary="Headless notifications",
-                body="They actually work! (this message brought to you by the 'proc' test suite :-)",
-                urgency='low',
-            )
+        env = dict((name, 'value') for name in REQUIRED_VARIABLES)
+        with ExternalCommand('sleep 60', environment=env):
+            with MockProgram('notify-send'):
+                notify_desktop(
+                    summary="Headless notifications",
+                    body="They actually work! (this message brought to you by the 'proc' test suite :-)",
+                    urgency='low',
+                )
 
     def test_exe_path_fallback(self):
         """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
