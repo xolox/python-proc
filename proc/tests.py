@@ -21,7 +21,7 @@ from pprint import pformat
 
 # External dependencies.
 import coloredlogs
-from executor import ExternalCommand, which
+from executor import CommandNotFound, ExternalCommand, which
 from executor.contexts import AbstractContext
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
@@ -160,9 +160,8 @@ class ProcTestCase(unittest.TestCase):
                 body="They actually work!",
                 urgency='low',
             )
-        except ExternalCommandFailed:
-            # There will never be a graphical session on Travis CI :-).
-            pass
+        except CommandNotFound:
+            logger.warning("notify-send-headless requires the notify-send program! (skipping test)")
 
     def test_exe_path_fallback(self):
         """Test the fall back method of :attr:`proc.core.Process.exe_path`."""
