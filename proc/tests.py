@@ -12,8 +12,11 @@ import logging
 import multiprocessing
 import operator
 import os
+import pipes
 import random
+import shutil
 import subprocess
+import tempfile
 import time
 import unittest
 
@@ -21,7 +24,7 @@ from pprint import pformat
 
 # External dependencies.
 import coloredlogs
-from executor import CommandNotFound, ExternalCommand, which
+from executor import CommandNotFound, ExternalCommand, get_search_path, which
 from executor.contexts import AbstractContext
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
@@ -29,7 +32,7 @@ from humanfriendly.compat import basestring
 # Modules included in our package.
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import Process, find_processes, gid_to_name, num_race_conditions, uid_to_name
-from proc.cron import cron_graceful, ensure_root_privileges, wait_for_processes
+from proc.cron import ADDITIONS_SCRIPT_NAME, cron_graceful, ensure_root_privileges, run_additions, wait_for_processes
 from proc.notify import find_graphical_context, notify_desktop
 from proc.tree import get_process_tree
 
@@ -157,7 +160,7 @@ class ProcTestCase(unittest.TestCase):
         try:
             notify_desktop(
                 summary="Headless notifications",
-                body="They actually work!",
+                body="They actually work! (this message brought to you by the 'proc' test suite :-)",
                 urgency='low',
             )
         except CommandNotFound:
@@ -259,6 +262,41 @@ class ProcTestCase(unittest.TestCase):
         # Test that command line options for verbosity control are accepted and
         # that a dry run of cron-graceful runs successfully.
         cron_graceful(['-q', '--quiet', '-v', '--verbose', '-n', '--dry-run'])
+
+    def test_cron_graceful_additions(self):
+        """Test :func:`proc.cron.run_additions()`."""
+        original_path = get_search_path()
+        directory = tempfile.mkdtemp()
+        try:
+            # Make only the programs in our (empty) directory available.
+            os.environ['PATH'] = directory
+            # If no program with the name cron-graceful-additions is available
+            # on the $PATH we expect this to be handled ... gracefully :-).
+            run_additions()
+            # If a program with the name cron-graceful-additions is available
+            # on the $PATH we expect it to be executed.
+            script_name = os.path.join(directory, ADDITIONS_SCRIPT_NAME)
+            signal_file = os.path.join(directory, 'hello-world')
+            with open(script_name, 'w') as handle:
+                handle.write(''.join([
+                    '#!/bin/sh\n',
+                    'echo > %s\n' % pipes.quote(signal_file),
+                ]))
+            os.chmod(script_name, 0o755)
+            run_additions()
+            assert os.path.isfile(signal_file), ("Looks like %r was never run!" % ADDITIONS_SCRIPT_NAME)
+            # If the cron-graceful-additions program fails we also expect this
+            # to be handled gracefully (i.e. a message is logged but the error
+            # isn't propagated).
+            with open(script_name, 'w') as handle:
+                handle.write(''.join([
+                    '#!/bin/sh\n',
+                    'exit 1\n',
+                ]))
+            run_additions()
+        finally:
+            os.environ['PATH'] = os.pathsep.join(original_path)
+            shutil.rmtree(directory)
 
     def test_race_conditions(self, timeout=60):
         """

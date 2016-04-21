@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 27, 2016
+# Last Change: April 21, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -105,6 +105,14 @@ logger = logging.getLogger(__name__)
 
 # Inject our logger into all execute() calls.
 execute = functools.partial(execute, logger=logger)
+
+ADDITIONS_SCRIPT_NAME = 'cron-graceful-additions'
+"""
+The name of the external command that's run by ``cron-graceful`` (a string).
+
+Refer to :func:`run_additions()` for details about how
+:data:`ADDITIONS_SCRIPT_NAME` is used.
+"""
 
 
 def main():
@@ -244,17 +252,17 @@ def run_additions():
     """
     Allow local additions to the behavior of ``cron-graceful``.
 
-    If a command named ``cron-graceful-additions`` exists in the ``$PATH``
-    it will be executed directly after the cron daemon is paused using
-    :func:`pause_cron_daemon()`. This allows you to inject custom logic
-    into the graceful shutdown process. If the command fails a warning
-    will be logged but the ``cron-graceful`` program will continue.
+    If a command with the name of :data:`ADDITIONS_SCRIPT_NAME` exists in the
+    ``$PATH`` it will be executed directly after the cron daemon is paused
+    using :func:`pause_cron_daemon()`. This allows you to inject custom logic
+    into the graceful shutdown process. If the command fails a warning will be
+    logged but the ``cron-graceful`` program will continue.
     """
-    matching_programs = which('cron-graceful-additions')
+    matching_programs = which(ADDITIONS_SCRIPT_NAME)
     if matching_programs:
         logger.info("Running command %s ..", matching_programs[0])
         try:
-            execute(matching_programs[0])
+            execute(matching_programs[0], shell=False)
         except ExternalCommandFailed as e:
             logger.warning("Command failed with exit status %i!", e.returncode)
 
