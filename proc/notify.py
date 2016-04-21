@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 21, 2016
+# Last Change: April 22, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -22,8 +22,10 @@ This module builds on top of the :mod:`proc.core` module as a trivial (but
 already useful :-) example of how the `proc` package can be used to search
 through the environments of all available processes. It looks for the variables
 in :attr:`REQUIRED_VARIABLES` in the environments of all available processes
-and uses the values it finds to run the notify-send program. Given super-user
-privileges this should work fine out of the box on any Linux system.
+and uses the values it finds to run the notify-send program. It's available on
+the command line as ``notify-send-headless`` (which accepts the same arguments
+as ``notify-send``). Given super-user privileges this should work fine out of
+the box on any Linux system.
 
 .. _cron jobs: http://unix.stackexchange.com/q/111188
 .. _notify-send: http://manpages.debian.org/cgi-bin/man.cgi?query=notify-send

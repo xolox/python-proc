@@ -78,6 +78,10 @@ The `proc` package was created with the following considerations in mind:
     possibilities of the `proc` package and as a practical tool that is ready
     to be used on any Linux system that has Python and cron_ installed.
 
+ 4. **The proc.notify module:** Implements the command line program
+    ``notify-send-headless`` which can be used to run the program
+    ``notify-send`` in headless environments like cron jobs and system daemons.
+
 History
 -------
 
