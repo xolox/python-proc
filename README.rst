@@ -117,6 +117,15 @@ procpy_
 procfs_
   Python API for the Linux ``/proc`` virtual filesystem.
 
+Future improvements
+-------------------
+
+Some random ideas for future improvements:
+
+- The ``notify-send-headless`` program can be generalized into "please run this
+  external command inside the current graphical environment". I recently ran
+  into several unrelated situations where this would have been useful!
+
 Contact
 -------
 
