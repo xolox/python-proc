@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: March 30, 2015
+# Last Change: May 27, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -51,7 +51,7 @@ def find_apache_memory_usage(exe_name='apache2'):
                  of Apache workers that are not WSGI daemon processes.
               2. A dictionary of key/value pairs, as follows:
 
-                 - Each key is a WSGI process group names as keys (see the
+                 - Each key is a WSGI process group name (see the
                    :attr:`~MaybeApacheWorker.wsgi_process_group` property).
                  - Each value is a :class:`StatsList` of integers with the
                    resident set size of the workers belonging to the WSGI
