@@ -3,7 +3,7 @@
 """Setup script for the `proc` package."""
 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 21, 2016
+# Last Change: June 1, 2016
 # URL: https://proc.readthedocs.org
 
 # Standard library modules.
@@ -46,7 +46,7 @@ setup(
     test_suite='proc.tests',
     install_requires=[
         'coloredlogs >= 5.0',
-        'executor >= 9.9',
+        'executor >= 10.0',
         'humanfriendly >= 1.35',
         'property-manager >= 1.2',
     ],

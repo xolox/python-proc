@@ -5,6 +5,7 @@ This API documentation is based on the source code of version |release| of the
 `proc` package. The following generic modules are available:
 
 - :mod:`proc`
+- :mod:`proc.unix`
 - :mod:`proc.core`
 - :mod:`proc.tree`
 
@@ -22,6 +23,12 @@ The :mod:`proc` module
 ----------------------
 
 .. automodule:: proc
+   :members:
+
+The :mod:`proc.unix` module
+---------------------------
+
+.. automodule:: proc.unix
    :members:
 
 The :mod:`proc.core` module

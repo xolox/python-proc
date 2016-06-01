@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 21, 2016
+# Last Change: June 1, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -253,10 +253,10 @@ def run_additions():
     Allow local additions to the behavior of ``cron-graceful``.
 
     If a command with the name of :data:`ADDITIONS_SCRIPT_NAME` exists in the
-    ``$PATH`` it will be executed directly after the cron daemon is paused
-    using :func:`pause_cron_daemon()`. This allows you to inject custom logic
-    into the graceful shutdown process. If the command fails a warning will be
-    logged but the ``cron-graceful`` program will continue.
+    ``$PATH`` it will be executed directly after the cron daemon is paused by
+    :func:`cron_graceful()`. This allows you to inject custom logic into the
+    graceful shutdown process. If the command fails a warning will be logged
+    but the ``cron-graceful`` program will continue.
     """
     matching_programs = which(ADDITIONS_SCRIPT_NAME)
     if matching_programs:

@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 27, 2016
+# Last Change: June 1, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -28,7 +28,8 @@ import pwd
 import time
 
 # External dependencies.
-from executor import ControllableProcess, which
+from executor import which
+from proc.unix import UnixProcess
 from property_manager import lazy_property
 
 # Initialize a logger.
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 num_race_conditions = dict(cmdline=0, environ=0, exe=0, stat=0, status=0)
 
 
-class Process(ControllableProcess):
+class Process(UnixProcess):
 
     """
     Process information based on ``/proc/[pid]/stat`` and similar files.
@@ -50,8 +51,8 @@ class Process(ControllableProcess):
     shouldn't be using the :class:`Process` constructor directly unless you
     know what you're doing.
 
-    :class:`Process` inherits from :class:`~executor.ControllableProcess` so
-    all of the process manipulation supported by :class:`~executor.ControllableProcess`
+    The :class:`Process` class extends :class:`~proc.unix.UnixProcess` which means
+    all of the process manipulation supported by :class:`~proc.unix.UnixProcess`
     is also supported by :class:`Process` objects.
 
     **Comparison to official /proc documentation**
@@ -145,13 +146,11 @@ class Process(ControllableProcess):
                             list of strings).
         """
         # Initialize the superclass.
-        super(Process, self).__init__(logger=logger)
+        super(Process, self).__init__()
         # Initialize instance variables.
         self.proc_tree = proc_tree
         self.stat_fields = stat_fields
-        # Define aliases for two methods that were renamed when the
-        # ControllableProcess class was extracted from the proc
-        # package and moved to the executor package.
+        # Define aliases for two previously renamed methods.
         self.cont = self.resume
         self.stop = self.suspend
 
@@ -273,9 +272,9 @@ class Process(ControllableProcess):
         """
         An alias for the :attr:`cmdline` property.
 
-        This alias exists so that :class:`~executor.ControllableProcess` can
-        log process ids and command lines (this helps to make the log output
-        more human friendly).
+        This alias exists so that :class:`~executor.process.ControllableProcess`
+        can log process ids and command lines (this helps to make the log
+        output more human friendly).
         """
         return self.cmdline
 
@@ -433,8 +432,10 @@ class Process(ControllableProcess):
         property is referenced to make sure that the process still exists and
         has not turned into a zombie_ process.
 
-        See also :func:`stop()`, :func:`cont()`, :func:`terminate()`
-        and :func:`kill()`.
+        See also :func:`~proc.unix.UnixProcess.suspend()`,
+        :func:`~proc.unix.UnixProcess.resume()`,
+        :func:`~executor.process.ControllableProcess.terminate()` and
+        :func:`~executor.process.ControllableProcess.kill()`.
         """
         stat_fields = parse_process_status(self.proc_tree, silent=True)
         return bool(stat_fields and stat_fields[2] != 'Z')
@@ -444,9 +445,9 @@ class Process(ControllableProcess):
         """
         An alias for :attr:`is_alive`.
 
-        This alias makes :class:`~executor.ControllableProcess` objects aware
-        of zombie_ processes so that e.g. killing of a zombie process doesn't
-        hang indefinitely (waiting for a zombie that will never die).
+        This alias makes :class:`~proc.unix.UnixProcess` objects aware of
+        zombie_ processes so that e.g. killing of a zombie process doesn't hang
+        indefinitely (waiting for a zombie that will never die).
         """
         return self.is_alive
 
@@ -602,8 +603,8 @@ class Process(ControllableProcess):
         The dictionaries constructed by this property are based on the contents
         of ``/proc/[pid]/status``, which `man 5 proc`_ describes as follows:
 
-         *Provides much of the information in ``/proc/[pid]/stat`` and
-         ``/proc/[pid]/statm`` in a format that's easier for humans to parse.*
+         *Provides much of the information in /proc/[pid]/stat and
+         /proc/[pid]/statm in a format that's easier for humans to parse.*
 
         While it's true that there is quite a lot of overlap between
         ``/proc/[pid]/stat`` and ``/proc/[pid]/status``, the latter also

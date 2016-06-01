@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 22, 2016
+# Last Change: June 1, 2016
 # URL: https://proc.readthedocs.org
 
 """Test suite for the `proc` package."""
@@ -16,6 +16,7 @@ import pipes
 import random
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -35,6 +36,7 @@ from proc.core import Process, find_processes, gid_to_name, num_race_conditions,
 from proc.cron import ADDITIONS_SCRIPT_NAME, cron_graceful, ensure_root_privileges, run_additions, wait_for_processes
 from proc.notify import REQUIRED_VARIABLES, find_graphical_context, notify_desktop
 from proc.tree import get_process_tree
+from proc.unix import UnixProcess
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -50,8 +52,7 @@ def setUpModule():
     useful when debugging remote test failures, whether they happened on Travis
     CI or a user's local system.
     """
-    # Initialize verbose logging to the terminal.
-    coloredlogs.install()
+    coloredlogs.install(level='DEBUG')
 
 
 class ProcTestCase(unittest.TestCase):
@@ -62,7 +63,11 @@ class ProcTestCase(unittest.TestCase):
 
     def setUp(self):
         """Reset the logging level before every test runs."""
-        coloredlogs.set_level(logging.DEBUG)
+        coloredlogs.set_level('DEBUG')
+        # Separate the name of the test method (printed by the superclass
+        # and/or py.test without a newline at the end) from the first line of
+        # logging output that the test method is likely going to generate.
+        sys.stderr.write("\n")
 
     def test_uid_to_name(self):
         """Make sure :func:`uid_to_name()` never raises exceptions."""
@@ -375,6 +380,74 @@ class ProcTestCase(unittest.TestCase):
             return
         assert 'proc-test' in wsgi_rss
         assert wsgi_rss['proc-test'].average > 0
+
+    def test_graceful_termination(self):
+        """Test graceful process termination."""
+        self.check_process_termination(method='terminate')
+
+    def test_forceful_termination(self):
+        """Test forceful process termination."""
+        self.check_process_termination(method='kill')
+
+    def check_process_termination(self, method):
+        """Helper method for process termination tests."""
+        timer = Timer()
+        # We use Executor to launch an external process.
+        with ExternalCommand('sleep', '60', check=False) as cmd:
+            # Verify that proc.unix.UnixProcess.is_running (which is normally
+            # overridden by proc.core.Process.is_running) works as expected,
+            # even though this property isn't actively used in the `proc'
+            # package because we want to deal with not-yet-reclaimed
+            # processes and zombie processes which is very much a Linux
+            # specific thing (hence the override).
+            unix_process = UnixProcess(pid=cmd.pid)
+            assert unix_process.is_running, "UnixProcess.is_running is broken!"
+            # We don't use Executor to control the process, instead we take the
+            # process ID and use it to create a Process object that doesn't
+            # know about Python's subprocess module.
+            linux_process = Process.from_pid(cmd.pid)
+            # We terminate the process using a positive but very low timeout so
+            # that all of the code involved gets a chance to run, but without
+            # significantly slowing down the test suite.
+            getattr(linux_process, method)(timeout=0.1)
+            # Now we can verify our assertions.
+            assert not linux_process.is_running, "Child still running despite graceful termination request!"
+            assert timer.elapsed_time < 10, "It look too long to terminate the child!"
+            # Now comes a hairy bit of Linux implementation details that most
+            # people can thankfully ignore (blissful ignorance :-). Parent
+            # processes are responsible for reclaiming child processes and
+            # until this happens the /proc/[pid] entry remains, which means
+            # the `kill -0' trick used by UnixProcess to detect running
+            # processes doesn't work as expected. Basically this means we
+            # _must_ make sure that waitpid() is called before we can expect
+            # UnixProcess.is_running to behave as expected.
+            cmd.wait()
+            # Now that we've called waitpid() things should work as expected.
+            assert not unix_process.is_running, "UnixProcess.is_running is broken!"
+
+    def test_is_running(self):
+        """Test that UnixProcess.is_running gracefully handles processes it doesn't have permission to query."""
+        init = UnixProcess(pid=1)
+        assert init.is_running
+
+    def test_suspend_and_resume_signals(self):
+        """Test the sending of ``SIGSTOP``, ``SIGCONT`` and ``SIGTERM`` signals."""
+        # Spawn a child that will live for a minute.
+        with ExternalCommand('sleep', '60', check=False) as cmd:
+            process = Process.from_pid(cmd.pid)
+            # Suspend the execution of the child process using SIGSTOP.
+            process.suspend()
+            # Test that the child process doesn't respond to SIGTERM once suspended.
+            process.terminate(wait=False)
+            assert process.is_running, "Child responded to signal even though it was suspended?!"
+            # Resume the execution of the child process using SIGCONT.
+            process.resume()
+            # Test that the child process responds to signals again after
+            # having been resumed, but give it a moment to terminate
+            # (significantly less time then the process is normally expected
+            # to run, otherwise there's no point in the test below).
+            process.kill(wait=True, timeout=5)
+            assert not process.is_running, "Child didn't respond to signal even though it was resumed?!"
 
 
 def executable(pathname):

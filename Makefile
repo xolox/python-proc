@@ -1,7 +1,7 @@
 # Makefile for proc.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 25, 2015
+# Last Change: June 1, 2016
 # URL: https://github.com/xolox/python-proc
 
 WORKON_HOME ?= $(HOME)/.virtualenvs
@@ -65,7 +65,7 @@ full-coverage: install
 
 docs: install
 	test -x "$(VIRTUAL_ENV)/bin/sphinx-build" || pip-accel install --quiet sphinx
-	cd docs && sphinx-build -b html -d build/doctrees . build/html
+	cd docs && sphinx-build -nb html -d build/doctrees . build/html
 
 publish:
 	git push origin && git push --tags origin

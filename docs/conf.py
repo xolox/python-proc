@@ -3,7 +3,7 @@ Documentation build configuration file for the `proc` package.
 """
 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 29, 2016
+# Last Change: June 1, 2016
 # URL: https://proc.readthedocs.org
 
 import os
@@ -58,6 +58,7 @@ pygments_style = 'sphinx'
 intersphinx_mapping = dict(
     python=('http://docs.python.org', None),
     executor=('https://executor.readthedocs.org/en/latest', None),
+    propertymanager=('https://property-manager.readthedocs.org/en/latest', None),
 )
 
 # -- Options for HTML output ---------------------------------------------------
