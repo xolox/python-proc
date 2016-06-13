@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2016
+# Last Change: June 13, 2016
 # URL: https://proc.readthedocs.org
 
 """
@@ -854,8 +854,10 @@ class ProtectedAccess(object):
                 if error_code == errno.EACCES:
                     # Permission errors are silently swallowed.
                     return True
-                if error_code == errno.ENOENT:
-                    # If the file has gone missing we consider it a race condition.
+                if error_code in (errno.ENOENT, errno.ESRCH):
+                    # If the file has gone missing we consider it a race condition:
+                    #  - ENOENT is reported when /proc/[pid] disappears.
+                    #  - ESRCH is reported when /proc/[pid]/stat disappears.
                     logger.debug("Failed to %s due to race condition! (%s)",
                                  self.action, filename)
                     num_race_conditions[self.key] += 1
