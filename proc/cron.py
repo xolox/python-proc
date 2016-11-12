@@ -89,12 +89,12 @@ import logging
 import logging.handlers
 import os
 import sys
-import textwrap
 
 # External dependencies.
 import coloredlogs
 from executor import ExternalCommandFailed, execute, quote, which
 from humanfriendly import concatenate, format_timespan, pluralize, Spinner, Timer
+from humanfriendly.terminal import usage, warning
 
 # Modules provided by our package.
 from proc.core import sorted_by_pid
@@ -112,6 +112,47 @@ The name of the external command that's run by ``cron-graceful`` (a string).
 
 Refer to :func:`run_additions()` for details about how
 :data:`ADDITIONS_SCRIPT_NAME` is used.
+"""
+
+USAGE_TEXT = """
+Usage: cron-graceful [OPTIONS]
+
+Gracefully stop the cron job scheduler by waiting for all running cron
+jobs to finish. The cron-graceful program works as follows:
+
+1. Identify the cron daemon process and send it a SIGSTOP signal to
+   prevent it from scheduling new cron jobs without killing it.
+
+2. Identify the currently running cron jobs by navigating the process
+   tree (if the cron daemon process had been killed in step one this
+   wouldn't be possible) and wait for the cron jobs to finish.
+
+4. Terminate the cron daemon process (because we've already identified
+   the running cron jobs and no new cron jobs can be scheduled we no
+   longer need the daemon).
+
+If a command named `cron-graceful-additions' exists in the $PATH it
+will be executed between steps one and two. This allows you to inject
+custom logic into the graceful shutdown process. If the command fails a
+warning will be logged but the cron-graceful program will continue.
+
+Supported options:
+
+  -n, --dry-run
+
+    Don't make any changes (doesn't require root access).
+
+  -v, --verbose
+
+    Make more noise (increase verbosity).
+
+  -q, --quiet
+
+    Make less noise (decrease verbosity).
+
+  -h, --help
+
+    Show this message and exit.
 """
 
 
@@ -181,47 +222,14 @@ def parse_arguments(arguments):
             elif option in ('-q', '--quiet'):
                 coloredlogs.decrease_verbosity()
             elif option in ('-h', '--help'):
-                usage()
+                usage(USAGE_TEXT)
                 sys.exit(0)
             else:
                 assert False, "Unhandled option!"
         return dry_run
     except Exception as e:
-        sys.stderr.write("Error: Failed to parse command line arguments! (%s)\n" % e)
+        warning("Error: Failed to parse command line arguments! (%s)", e)
         sys.exit(1)
-
-
-def usage():
-    """Print a usage message to the terminal."""
-    print(textwrap.dedent("""
-        Usage: cron-graceful [OPTIONS]
-
-        Gracefully stop the cron job scheduler by waiting for all running cron
-        jobs to finish. The cron-graceful program works as follows:
-
-        1. Identify the cron daemon process and send it a SIGSTOP signal to
-           prevent it from scheduling new cron jobs without killing it.
-
-        2. Identify the currently running cron jobs by navigating the process
-           tree (if the cron daemon process had been killed in step one this
-           wouldn't be possible) and wait for the cron jobs to finish.
-
-        4. Terminate the cron daemon process (because we've already identified
-           the running cron jobs and no new cron jobs can be scheduled we no
-           longer need the daemon).
-
-        If a command named `cron-graceful-additions' exists in the $PATH it
-        will be executed between steps one and two. This allows you to inject
-        custom logic into the graceful shutdown process. If the command fails a
-        warning will be logged but the cron-graceful program will continue.
-
-        Supported options:
-
-          -n, --dry-run  don't make any changes
-          -v, --verbose  make more noise than usual
-          -q, --quiet    make less noise than usual
-          -h, --help     show this message and exit
-    """))
 
 
 def ensure_root_privileges():
@@ -229,7 +237,7 @@ def ensure_root_privileges():
     Make sure we have root privileges.
     """
     if os.getuid() != 0:
-        sys.stderr.write("Error: Please run this command as root!\n")
+        warning("Error: Please run this command as root!")
         sys.exit(1)
 
 
