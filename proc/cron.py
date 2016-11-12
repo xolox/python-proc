@@ -289,12 +289,15 @@ def wait_for_processes(processes):
     :param processes: A list of :class:`~proc.tree.ProcessNode` objects.
     """
     wait_timer = Timer()
-    for process in processes:
-        logger.info("Waiting for process %i: %s (%s)",
+    running_processes = list(processes)
+    for process in running_processes:
+        logger.info("Waiting for process %i: %s (runtime is %s)",
                     process.pid, quote(process.cmdline), format_timespan(round(process.runtime)))
     with Spinner(timer=wait_timer) as spinner:
         while True:
-            running_processes = [p for p in processes if p.is_alive]
+            for process in list(running_processes):
+                if not process.is_alive:
+                    running_processes.remove(process)
             if not running_processes:
                 break
             num_processes = pluralize(len(running_processes), "process", "processes")
