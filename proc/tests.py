@@ -29,6 +29,7 @@ from executor import ExternalCommand, get_search_path, which
 from executor.contexts import AbstractContext
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
+from humanfriendly.text import compact
 
 # Modules included in our package.
 from proc.apache import find_apache_memory_usage, StatsList
@@ -68,6 +69,22 @@ class ProcTestCase(unittest.TestCase):
         # and/or py.test without a newline at the end) from the first line of
         # logging output that the test method is likely going to generate.
         sys.stderr.write("\n")
+
+    def skipTest(self, text, *args, **kw):
+        """
+        Enable backwards compatible "marking of tests to skip".
+
+        By calling this method from a return statement in the test to be
+        skipped the test can be marked as skipped when possible, without
+        breaking the test suite when unittest.TestCase.skipTest() isn't
+        available.
+        """
+        reason = compact(text, *args, **kw)
+        try:
+            super(ProcTestCase, self).skipTest(reason)
+        except AttributeError:
+            # unittest.TestCase.skipTest() isn't available in Python 2.6.
+            logger.warning("%s", reason)
 
     def test_uid_to_name(self):
         """Make sure :func:`uid_to_name()` never raises exceptions."""
@@ -176,8 +193,7 @@ class ProcTestCase(unittest.TestCase):
         candidates = [p for p in find_processes() if p.exe_path and not p.exe]
         logger.debug("Candidates for Process.exe_path fall back test:\n%s", pformat(candidates))
         if not candidates:
-            logger.debug("Skipping test: No processes available on which Process.exe_path fall back can be tested!")
-            return
+            return self.skipTest("No processes available on which Process.exe_path fall back can be tested!")
         assert executable(candidates[0].exe_path), \
             "Fall back method of Process.exe_path reported invalid executable pathname!"
 
@@ -186,13 +202,11 @@ class ProcTestCase(unittest.TestCase):
         if os.getuid() == 0:
             # Given root privileges all /proc/[pid]/exe symbolic links can be
             # successfully resolved so we can't test the fall back method.
-            logger.debug("Skipping test: Fall back method of Process.exe_name is useless with root privileges!")
-            return
+            return self.skipTest("Fall back method of Process.exe_name is useless with root privileges!")
         candidates = [p for p in find_processes() if p.exe_name and not p.exe_path]
         logger.debug("Candidates for Process.exe_name fall back test:\n %s", pformat(candidates))
         if not candidates:
-            logger.debug("Skipping test: No processes available on which Process.exe_name fall back can be tested!")
-            return
+            return self.skipTest("No processes available on which Process.exe_name fall back can be tested!")
         assert any(which(p.exe_name) for p in candidates), \
             "Fall back method of Process.exe_name reported executable base name not available on $PATH?!"
 
@@ -365,8 +379,7 @@ class ProcTestCase(unittest.TestCase):
     def test_apache_worker_monitoring(self):
         """Test the :mod:`proc.apache` module."""
         if not os.path.exists('/etc/apache2/sites-enabled/proc-test-vhost'):
-            logger.debug("Skipping test: Apache worker monitoring test disabled except on Travis CI!")
-            return
+            return self.skipTest("Apache worker monitoring test disabled except on Travis CI!")
         worker_rss, wsgi_rss = find_apache_memory_usage()
         # Make sure some regular Apache workers were identified.
         assert len(worker_rss) > 0, "No regular Apache workers found?!"
@@ -375,9 +388,8 @@ class ProcTestCase(unittest.TestCase):
         # identification of WSGI workers requires root privileges, so
         # without that there's no point in running the test (we know it
         # will fail).
-        if not os.getuid() == 0:
-            logger.debug("Skipping test: Apache WSGI worker monitoring test requires root privileges!")
-            return
+        if os.getuid() != 0:
+            return self.skipTest("Apache WSGI worker monitoring test requires root privileges!")
         assert 'proc-test' in wsgi_rss
         assert wsgi_rss['proc-test'].average > 0
 
