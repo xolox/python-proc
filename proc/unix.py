@@ -2,7 +2,7 @@
 #
 # Author: Peter Odding <peter@peterodding.com>
 # Last Change: June 1, 2016
-# URL: https://proc.readthedocs.org
+# URL: https://proc.readthedocs.io
 
 """
 The :mod:`proc.unix` module manipulates UNIX processes using signals.

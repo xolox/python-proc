@@ -12,13 +12,13 @@
 #    again because of the proc.core.Process.exe property.
 
 # First we run the test suite as a regular user.
-coverage run setup.py test
+py.test --cov
 
 # Then we run the test suite with root privileges.
-sudo $(which coverage) run setup.py test
+sudo $(which py.test) --cov --cov-append
 
-# Combine the coverage data files.
-coverage combine
+# Restore the ownership of the coverage data.
+sudo chown $USER:$USER .coverage
 
 # Report the coverage statistics to the terminal
 # and fail if the coverage drops below 90%.

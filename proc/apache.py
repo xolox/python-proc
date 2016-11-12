@@ -2,7 +2,7 @@
 #
 # Author: Peter Odding <peter@peterodding.com>
 # Last Change: May 27, 2016
-# URL: https://proc.readthedocs.org
+# URL: https://proc.readthedocs.io
 
 """
 The :mod:`proc.apache` module monitors the memory usage of Apache_ workers.

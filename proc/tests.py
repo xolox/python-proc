@@ -1,8 +1,8 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2016
-# URL: https://proc.readthedocs.org
+# Last Change: November 12, 2016
+# URL: https://proc.readthedocs.io
 
 """Test suite for the `proc` package."""
 

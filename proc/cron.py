@@ -1,8 +1,8 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2016
-# URL: https://proc.readthedocs.org
+# Last Change: November 12, 2016
+# URL: https://proc.readthedocs.io
 
 """
 The :mod:`proc.cron` module implements graceful termination of cron_.

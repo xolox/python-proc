@@ -154,7 +154,7 @@ This software is licensed under the `MIT license`_.
 
 .. External references:
 .. _cron: http://en.wikipedia.org/wiki/Cron
-.. _documentation: https://proc.readthedocs.org
+.. _documentation: https://proc.readthedocs.io
 .. _GitHub: https://github.com/xolox/python-proc
 .. _MIT license: http://en.wikipedia.org/wiki/MIT_License
 .. _per user site-packages directory: https://www.python.org/dev/peps/pep-0370/
@@ -165,5 +165,5 @@ This software is licensed under the `MIT license`_.
 .. _procpy: http://code.google.com/p/procpy/
 .. _psutil: https://pypi.python.org/pypi/psutil/
 .. _PyPI: https://pypi.python.org/pypi/proc
-.. _Read the Docs: https://proc.readthedocs.org
+.. _Read the Docs: https://proc.readthedocs.io
 .. _virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/

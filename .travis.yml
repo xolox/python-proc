@@ -9,10 +9,15 @@ python:
 before_install:
   - scripts/install-apache-mod-wsgi
 install:
-  - pip install coveralls
-  - python setup.py install
+  - pip install pip-accel
+  - pip-accel install coveralls
+  - pip-accel install --requirement=requirements.txt
+  - pip-accel install --requirement=requirements-checks.txt
+  - pip-accel install --requirement=requirements-tests.txt
+  - LC_ALL=C pip-accel install .
 script:
-  - scripts/collect-full-coverage
+  - make check
+  - make full-coverage
 after_success:
   - coveralls
 branches:

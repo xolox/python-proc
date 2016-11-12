@@ -2,7 +2,7 @@
 #
 # Author: Peter Odding <peter@peterodding.com>
 # Last Change: November 10, 2015
-# URL: https://proc.readthedocs.org
+# URL: https://proc.readthedocs.io
 
 """
 The :mod:`proc.tree` module builds tree data structures based on process trees.

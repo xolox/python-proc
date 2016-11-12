@@ -1,0 +1,4 @@
+coloredlogs >= 5.0
+executor >= 10.0
+humanfriendly >= 1.35
+property-manager >= 1.2

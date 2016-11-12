@@ -1,26 +1,29 @@
-# Makefile for proc.
+# Makefile for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2016
+# Last Change: November 12, 2016
 # URL: https://github.com/xolox/python-proc
 
+PACKAGE_NAME = proc
 WORKON_HOME ?= $(HOME)/.virtualenvs
-VIRTUAL_ENV ?= $(WORKON_HOME)/proc
+VIRTUAL_ENV ?= $(WORKON_HOME)/$(PACKAGE_NAME)
 PATH := $(VIRTUAL_ENV)/bin:$(PATH)
 MAKE := $(MAKE) --no-print-directory
+SHELL = bash
 
 default:
-	@echo 'Makefile for proc'
+	@echo "Makefile for $(PACKAGE_NAME)"
 	@echo
 	@echo 'Usage:'
 	@echo
-	@echo '    make install   install the package in a virtual environment'
-	@echo '    make reset     recreate the virtual environment'
-	@echo '    make test      run the test suite'
-	@echo '    make coverage  run the tests, report coverage'
-	@echo '    make docs      update documentation using Sphinx'
-	@echo '    make publish   publish changes to GitHub/PyPI'
-	@echo '    make clean     cleanup all temporary files'
+	@echo '    make install    install the package in a virtual environment'
+	@echo '    make reset      recreate the virtual environment'
+	@echo '    make check      check coding style (PEP-8, PEP-257)'
+	@echo '    make test       run the test suite, report coverage'
+	@echo '    make tox        run the tests on all Python versions'
+	@echo '    make docs       update documentation using Sphinx'
+	@echo '    make publish    publish changes to GitHub/PyPI'
+	@echo '    make clean      cleanup all temporary files'
 	@echo
 
 install:
@@ -28,8 +31,9 @@ install:
 	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --quiet "$(VIRTUAL_ENV)"
 	@test -x "$(VIRTUAL_ENV)/bin/pip" || easy_install pip
 	@test -x "$(VIRTUAL_ENV)/bin/pip-accel" || pip install --quiet pip-accel
-	@pip uninstall -y proc 1>/dev/null 2>&1 || true
-	@pip-accel install --quiet --editable .
+	@pip-accel install --quiet --requirement=requirements.txt
+	@pip uninstall --yes $(PACKAGE_NAME) &>/dev/null || true
+	@pip install --quiet --no-deps --ignore-installed .
 
 reset:
 	$(MAKE) clean
@@ -37,43 +41,38 @@ reset:
 	$(MAKE) install
 
 check: install
-	test -x "$(VIRTUAL_ENV)/bin/flake8" || pip-accel install --quiet flake8-pep257
-	flake8
+	@scripts/check-code-style.sh
 
-pytest: install
-	test -x "$(VIRTUAL_ENV)/bin/py.test" || pip-accel install --quiet pytest
-	py.test
+test: install
+	@pip-accel install --quiet --requirement=requirements-tests.txt
+	@py.test --cov --cov-report=html --cov-fail-under=90
 
 tox: install
-	test -x "$(VIRTUAL_ENV)/bin/tox" || pip-accel install --quiet tox
-	tox
-
-coverage: install
-	test -x "$(VIRTUAL_ENV)/bin/coverage" || pip-accel install --quiet coverage
-	coverage run setup.py test
-	coverage combine
-	coverage html
-	coverage report --fail-under=90
+	@pip-accel install --quiet tox && tox
 
 # The following makefile target isn't documented on purpose, I don't want
 # people to execute this without them knowing very well what they're doing.
 
 full-coverage: install
-	test -x "$(VIRTUAL_ENV)/bin/coverage" || pip-accel install --quiet coverage
-	scripts/collect-full-coverage
-	coverage html
+	@pip-accel install --quiet --requirement=requirements-tests.txt
+	@scripts/collect-full-coverage
+	@coverage html
 
 docs: install
-	test -x "$(VIRTUAL_ENV)/bin/sphinx-build" || pip-accel install --quiet sphinx
-	cd docs && sphinx-build -nb html -d build/doctrees . build/html
+	@pip-accel install --quiet sphinx
+	@cd docs && sphinx-build -nb html -d build/doctrees . build/html
 
-publish:
+publish: install
 	git push origin && git push --tags origin
-	make clean && python setup.py sdist upload
+	$(MAKE) clean
+	pip-accel install --quiet twine wheel
+	python setup.py sdist bdist_wheel
+	twine upload dist/*
+	$(MAKE) clean
 
 clean:
-	rm -Rf *.egg *.egg-info .coverage .tox build dist docs/build htmlcov
-	find -depth -type d -name __pycache__ -exec rm -Rf {} \;
-	find -type f -name '*.pyc' -delete
+	@rm -Rf *.egg .cache .coverage .tox build dist docs/build htmlcov
+	@find -depth -type d -name __pycache__ -exec rm -Rf {} \;
+	@find -type f -name '*.pyc' -delete
 
-.PHONY: default install reset pytest tox coverage full-coverage docs publish clean
+.PHONY: default install reset check test tox full-coverage docs publish clean

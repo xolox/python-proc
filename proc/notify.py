@@ -2,7 +2,7 @@
 #
 # Author: Peter Odding <peter@peterodding.com>
 # Last Change: April 22, 2016
-# URL: https://proc.readthedocs.org
+# URL: https://proc.readthedocs.io
 
 """
 The :mod:`proc.notify` module implements a headless notify-send_ program.
