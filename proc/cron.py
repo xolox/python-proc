@@ -314,18 +314,19 @@ def terminate_cron_daemon(cron_daemon):
     :param cron_daemon: The :class:`~proc.tree.ProcessNode` of the cron
                         daemon process.
     """
-    # Forcefully kill the cron daemon. This is kind of brute force, but we
-    # can't really expect an /etc/init.d/cron script or upstart job to deal
-    # gracefully with the cron daemon being SIGSTOP'ed.
-    cron_daemon.kill()
-    # When we forcefully kill the cron daemon process, there is the risk
-    # that the init daemon (e.g. upstart) will immediately restart it. Of
-    # course the whole point of this exercise is to guarantee that all
-    # running cron jobs have finished and the cron daemon has stopped
-    # scheduling new jobs, so there's this workaround.
-    logger.info("Telling init not to restart cron ..")
-    if not execute('service cron stop', check=False):
+    # We'll first try to terminate the cron daemon using whatever daemon
+    # supervision system is in place (e.g. upstart or systemd) instead of
+    # simply killing the cron process, as a signal that we don't want the cron
+    # daemon to be restarted.
+    logger.info("Stopping cron daemon (service cron stop) ..")
+    if not execute('service', 'cron', 'stop', check=False):
         logger.warning("The 'service cron stop' command reported an error!")
+    # If the service command failed to terminate the cron daemon we will
+    # terminate cron explicitly, in the assumption that we're dealing with a
+    # naive /etc/init.d/cron script that doesn't use SIGKILL when SIGTERM fails
+    # (due to our earlier SIGSTOP).
+    if cron_daemon.is_alive:
+        cron_daemon.kill()
 
 
 class CronDaemonNotRunning(Exception):
