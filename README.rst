@@ -60,38 +60,41 @@ The `proc` package was created with the following considerations in mind:
  The API of the `proc` package hides race conditions as much as possible and
  where this is not possible the consequences are clearly documented.
 
-**A layered API design** (where each layer is documented)
+**Layered API design** (where each layer is documented)
  Builds higher level abstractions on top of lower level abstractions:
 
- 1. **The proc.unix module:** Defines a simple process class that combines
-     process IDs and common UNIX signals to implement process control
-     primitives like waiting for a process to end and gracefully
-     or forcefully terminating a process.
+ **The proc.unix module**
+  Defines a simple process class that combines process IDs and common UNIX
+  signals to implement process control primitives like waiting for a process to
+  end and gracefully or forcefully terminating a process.
 
- 2. **The proc.core module:** Builds on top of the ``proc.unix`` module to
-     provide a simple, fast and easy to use API for the process information
-     available in ``/proc``. If you're looking for a simple and/or fast
-     interface to ``/proc`` that does the heavy lifting (parsing) for you then
-     this is what you're looking for.
+ **The proc.core module**
+  Builds on top of the ``proc.unix`` module to provide a simple, fast and easy
+  to use API for the process information available in ``/proc``. If you're
+  looking for a simple and/or fast interface to ``/proc`` that does the heavy
+  lifting (parsing) for you then this is what you're looking for.
 
- 3. **The proc.tree module:** Builds on top of the ``proc.core`` module to
-    provide an in-memory tree data structure that mimics the actual process
-    tree, enabling easy searching and navigation through the process tree.
+ **The proc.tree module**
+  Builds on top of the ``proc.core`` module to provide an in-memory tree data
+  structure that mimics the actual process tree, enabling easy searching and
+  navigation through the process tree.
 
- 4. **The proc.apache module:** Builds on top of the ``proc.tree`` module to
-     implement an easy to use Python API that does metrics collection for
-     monitoring of Apache web server worker memory usage, including support for
-     WSGI process groups.
+ **The proc.apache module**
+  Builds on top of the ``proc.tree`` module to implement an easy to use Python
+  API that does metrics collection for monitoring of Apache web server worker
+  memory usage, including support for WSGI process groups.
 
- 5. **The proc.cron module:** Implements the command line program
-    ``cron-graceful`` which gracefully terminates cron daemons. This module
-    builds on top of the ``proc.tree`` module as a demonstration of the
-    possibilities of the `proc` package and as a practical tool that is ready
-    to be used on any Linux system that has Python and cron_ installed.
+ **The proc.cron module**
+  Implements the command line program ``cron-graceful`` which gracefully
+  terminates cron daemons. This module builds on top of the ``proc.tree``
+  module as a demonstration of the possibilities of the `proc` package and as a
+  practical tool that is ready to be used on any Linux system that has Python
+  and cron_ installed.
 
- 6. **The proc.notify module:** Implements the command line program
-    ``notify-send-headless`` which can be used to run the program
-    ``notify-send`` in headless environments like cron jobs and system daemons.
+ **The proc.notify module**
+  Implements the command line program ``notify-send-headless`` which can be
+  used to run the program ``notify-send`` in headless environments like cron
+  jobs and system daemons.
 
 History
 -------
