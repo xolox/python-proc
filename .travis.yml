@@ -7,7 +7,7 @@ python:
   - "3.5"
   - "pypy"
 before_install:
-  - scripts/install-apache-mod-wsgi
+  - scripts/install-on-travis.sh
 install:
   - pip install pip-accel
   - pip-accel install coveralls
