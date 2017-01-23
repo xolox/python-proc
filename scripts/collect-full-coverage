@@ -11,8 +11,14 @@
 #  - The proc.apache module requires root privileges to identify WSGI workers,
 #    again because of the proc.core.Process.exe property.
 
+# Try to kill any running gpg-agents, to give the test suite the chance to spawn a new one.
+killall gpg-agent &>/dev/null || true
+
 # First we run the test suite as a regular user.
 py.test --cov
+
+# Again we try to kill any running gpg-agents to give the test suite the chance to spawn a new one.
+sudo killall gpg-agent &>/dev/null || true
 
 # Then we run the test suite with root privileges.
 sudo $(which py.test) --cov --cov-append

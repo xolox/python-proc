@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 12, 2016
+# Last Change: January 24, 2017
 # URL: https://proc.readthedocs.io
 
 """Test suite for the `proc` package."""
@@ -35,6 +35,7 @@ from humanfriendly.text import compact
 from proc.apache import find_apache_memory_usage, StatsList
 from proc.core import Process, find_processes, gid_to_name, num_race_conditions, uid_to_name
 from proc.cron import ADDITIONS_SCRIPT_NAME, cron_graceful, ensure_root_privileges, run_additions, wait_for_processes
+from proc.gpg import get_gpg_variables, with_gpg_agent
 from proc.notify import REQUIRED_VARIABLES, find_graphical_context, notify_desktop
 from proc.tree import get_process_tree
 from proc.unix import UnixProcess
@@ -170,6 +171,26 @@ class ProcTestCase(unittest.TestCase):
         with ExternalCommand('sleep', '30', environment=dict(unique_value=unique_value)) as sleep_cmd:
             sleep_proc = Process.from_pid(sleep_cmd.pid)
             assert sleep_proc.environ['unique_value'] == unique_value
+
+    def test_get_gpg_variables(self):
+        """Test that searching for gpg-agents works."""
+        if not which('gpg-agent'):
+            return self.skipTest("The gpg-agent program is not installed!")
+        variables = get_gpg_variables()
+        assert variables['GPG_AGENT_INFO']
+
+    def test_with_gpg_agent(self):
+        """Test that ``with-gpg-agent`` works."""
+        if not which('gpg-agent'):
+            return self.skipTest("The gpg-agent program is not installed!")
+        # Test that `with-gpg-agent -h' / `with-gpg-agent --help' works.
+        self.assertRaises(SystemExit, with_gpg_agent, ['-h'])
+        self.assertRaises(SystemExit, with_gpg_agent, ['--help'])
+        # Test that invalid command line options raise an error.
+        self.assertRaises(SystemExit, with_gpg_agent, ['--whatever'])
+        # Test that command line options for verbosity control are accepted
+        # and that the with-gpg-agent program runs successfully.
+        with_gpg_agent(['-v', '--verbose', '-q', '--quiet', 'true'])
 
     def test_find_graphical_context(self):
         """Test that :func:`proc.notify.find_graphical_context()` works."""

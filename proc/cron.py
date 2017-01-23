@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 12, 2016
+# Last Change: January 23, 2017
 # URL: https://proc.readthedocs.io
 
 """
@@ -72,7 +72,7 @@ To use the program you simply run it with super user privileges:
    $ sudo cron-graceful
 
 Internal documentation of :mod:`proc.cron`
-=============================================
+==========================================
 
 .. _cron: http://en.wikipedia.org/wiki/Cron
 .. _grepping: http://en.wikipedia.org/wiki/Grep#Usage_as_a_verb
@@ -86,7 +86,6 @@ Internal documentation of :mod:`proc.cron`
 import functools
 import getopt
 import logging
-import logging.handlers
 import os
 import sys
 
