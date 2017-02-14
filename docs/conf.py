@@ -3,7 +3,7 @@ Documentation build configuration file for the `proc` package.
 """
 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2016
+# Last Change: February 14, 2017
 # URL: https://proc.readthedocs.io
 
 import os
@@ -28,7 +28,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'proc'
-copyright = u'2016, Peter Odding'
+copyright = u'2017, Peter Odding'
 
 # Find the package version and make it the release.
 from proc import __version__ as proc_version
