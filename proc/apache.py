@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 27, 2016
+# Last Change: February 14, 2017
 # URL: https://proc.readthedocs.io
 
 """
@@ -128,9 +128,16 @@ def find_apache_workers(exe_name='apache2'):
              cannot be found.
     """
     init = get_process_tree(obj_type=MaybeApacheWorker)
-    master = init.find(exe_name=exe_name)
-    if not master:
+    candidates = list(init.find_all(exe_name=exe_name))
+    if len(candidates) > 1:
+        # If we find more than one process with the executable name `apache2'
+        # whose parent process is `init' (1) we will narrow down the list of
+        # candidates by disregarding any processes that are not running with
+        # superuser privileges.
+        candidates = [p for p in candidates if p.user_ids.real == 0]
+    if not candidates:
         raise ApacheDaemonNotRunning("Could not find Apache master process! Is it running?")
+    master = candidates[0]
     for process in master.children:
         if process.exe_path == master.exe_path:
             yield process
