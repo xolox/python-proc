@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 22, 2016
+# Last Change: June 24, 2017
 # URL: https://proc.readthedocs.io
 
 """
@@ -33,11 +33,13 @@ the box on any Linux system.
 
 # Standard library modules.
 import collections
+import logging
 import os
 import sys
 
 # External dependencies.
 import coloredlogs
+from executor import CommandNotFound, ExternalCommandFailed
 from executor.contexts import LocalContext
 
 # Modules included in our package.
@@ -45,6 +47,9 @@ from proc.core import find_processes
 
 REQUIRED_VARIABLES = 'DBUS_SESSION_BUS_ADDRESS', 'DISPLAY', 'XAUTHORITY'
 """The names of environment variables required by ``notify-send`` (a tuple of strings)."""
+
+# Initialize a logger for this module.
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -80,7 +85,12 @@ def notify_desktop(body, summary=None, **options):
         command_line.append(summary)
     command_line.append(body)
     context = find_graphical_context()
-    context.execute(*command_line)
+    try:
+        context.execute(*command_line)
+    except CommandNotFound:
+        logger.debug("Desktop notification failed (the `notify-send' program isn't installed).")
+    except ExternalCommandFailed:
+        logger.debug("Desktop notification failed (the `notify-send' program reported an error).")
 
 
 def find_graphical_context():
