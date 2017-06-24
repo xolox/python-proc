@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 24, 2017
+# Last Change: June 24, 2017
 # URL: https://proc.readthedocs.io
 
 """Test suite for the `proc` package."""
@@ -12,12 +12,9 @@ import logging
 import multiprocessing
 import operator
 import os
-import pipes
 import random
-import shutil
 import subprocess
 import sys
-import tempfile
 import time
 import unittest
 
@@ -25,10 +22,11 @@ from pprint import pformat
 
 # External dependencies.
 import coloredlogs
-from executor import ExternalCommand, get_search_path, which
+from executor import ExternalCommand, which
 from executor.contexts import AbstractContext
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
+from humanfriendly.testing import CustomSearchPath, MockedProgram
 from humanfriendly.text import compact
 
 # Modules included in our package.
@@ -202,7 +200,7 @@ class ProcTestCase(unittest.TestCase):
         """Test that :func:`proc.notify.notify_desktop()` works."""
         env = dict((name, 'value') for name in REQUIRED_VARIABLES)
         with ExternalCommand('sleep 60', environment=env):
-            with MockProgram('notify-send'):
+            with MockedProgram('notify-send'):
                 notify_desktop(
                     summary="Headless notifications",
                     body="They actually work! (this message brought to you by the 'proc' test suite :-)",
@@ -307,16 +305,16 @@ class ProcTestCase(unittest.TestCase):
         """Test :func:`proc.cron.run_additions()`."""
         # If no program with the name cron-graceful-additions is available
         # on the $PATH we expect this to be handled ... gracefully :-).
-        with CustomSearchPath():
+        with CustomSearchPath(isolated=True):
             run_additions()
         # If a program with the name cron-graceful-additions is available
         # on the $PATH we expect it to be executed successfully.
-        with MockProgram(ADDITIONS_SCRIPT_NAME):
+        with MockedProgram(ADDITIONS_SCRIPT_NAME):
             run_additions()
         # If the cron-graceful-additions program fails we also expect this
         # to be handled gracefully (i.e. a message is logged but the error
         # isn't propagated).
-        with MockProgram(ADDITIONS_SCRIPT_NAME, returncode=1):
+        with MockedProgram(ADDITIONS_SCRIPT_NAME, returncode=1):
             run_additions()
 
     def test_race_conditions(self, timeout=60):
@@ -523,108 +521,3 @@ class RaceConditionHelper(multiprocessing.Process):
         logger.debug("Race condition helper %i sleeping for %.2f seconds ..", os.getpid(), timeout)
         time.sleep(timeout)
         logger.debug("Race condition helper %i terminating ..", os.getpid())
-
-
-class TemporaryDirectory(object):
-
-    """
-    Easy temporary directory creation & cleanup using the :keyword:`with` statement.
-
-    Here's an example of how to use this:
-
-    .. code-block:: python
-
-       with TemporaryDirectory() as directory:
-           # Do something useful here.
-           assert os.path.isdir(directory)
-    """
-
-    def __init__(self, **options):
-        """
-        Initialize context manager that manages creation & cleanup of temporary directory.
-
-        :param options: Any keyword arguments are passed on to
-                        :func:`tempfile.mkdtemp()`.
-        """
-        self.options = options
-        self.temporary_directory = None
-
-    def __enter__(self):
-        """Create the temporary directory."""
-        if self.temporary_directory is None:
-            self.temporary_directory = tempfile.mkdtemp(**self.options)
-            logger.debug("Created temporary directory: %s", self.temporary_directory)
-        return self.temporary_directory
-
-    def __exit__(self, exc_type=None, exc_value=None, traceback=None):
-        """Destroy the temporary directory."""
-        if self.temporary_directory is not None:
-            logger.debug("Cleaning up temporary directory: %s", self.temporary_directory)
-            shutil.rmtree(self.temporary_directory)
-            self.temporary_directory = None
-
-
-class CustomSearchPath(TemporaryDirectory):
-
-    """Context manager to create an isolated executable search path."""
-
-    def __init__(self, *args, **kw):
-        """Initialize an :class:`CustomSearchPath` object."""
-        super(CustomSearchPath, self).__init__(*args, **kw)
-        self.original_search_path = None
-
-    def __enter__(self):
-        """Activate the isolated search path."""
-        directory = super(CustomSearchPath, self).__enter__()
-        self.original_search_path = os.environ.get('PATH')
-        os.environ['PATH'] = self.custom_search_path
-        return directory
-
-    def __exit__(self, *args, **kw):
-        """Deactivate the isolated search path."""
-        if self.original_search_path is not None:
-            os.environ['PATH'] = self.original_search_path
-            self.original_search_path = None
-        return super(CustomSearchPath, self).__exit__(*args, **kw)
-
-    @property
-    def custom_search_path(self):
-        """The custom search path (a string)."""
-        return self.temporary_directory
-
-
-class MockProgram(CustomSearchPath):
-
-    """Context manager to mock executables."""
-
-    def __init__(self, name, returncode=0, *args, **kw):
-        """Initialize an :class:`MockProgram` object."""
-        super(MockProgram, self).__init__(*args, **kw)
-        self.program_name = name
-        self.returncode = returncode
-        self.signal_file = None
-
-    def __enter__(self):
-        """Create the mock program."""
-        directory = super(MockProgram, self).__enter__()
-        self.signal_file = os.path.join(directory, 'signal-file')
-        pathname = os.path.join(directory, self.program_name)
-        with open(pathname, 'w') as handle:
-            handle.write('#!/bin/sh\n')
-            handle.write('echo > %s\n' % pipes.quote(self.signal_file))
-            handle.write('exit %i\n' % self.returncode)
-        os.chmod(pathname, 0o755)
-        return directory
-
-    def __exit__(self, *args, **kw):
-        """Make sure the mock program was run."""
-        try:
-            assert self.signal_file and os.path.isfile(self.signal_file), \
-                ("Looks like %r was never run!" % self.program_name)
-        finally:
-            return super(MockProgram, self).__exit__(*args, **kw)
-
-    @property
-    def custom_search_path(self):
-        """The custom search path (a string)."""
-        return os.pathsep.join([self.temporary_directory] + get_search_path())
