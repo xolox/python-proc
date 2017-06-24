@@ -147,7 +147,7 @@ class ProcTestCase(unittest.TestCase):
         # Test some basic assumptions about the result of find_processes().
         processes = dict((p.pid, p) for p in find_processes())
         assert 1 in processes, "init process not found in output of find_processes()!"
-        assert processes[1].comm == 'init', "init isn't called init?!"
+        assert processes[1].comm in ('init', 'systemd')
         assert os.getpid() in processes, "Current process not found in output of find_processes()!"
 
     def test_is_alive(self):
