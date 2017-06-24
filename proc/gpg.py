@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 24, 2017
+# Last Change: June 24, 2017
 # URL: https://proc.readthedocs.io
 
 """
@@ -79,15 +79,20 @@ import functools
 import getopt
 import logging
 import os
+import stat
 import sys
 
 # External dependencies.
 import coloredlogs
 from executor import ExternalCommandFailed, execute
+from humanfriendly import parse_path
 from humanfriendly.terminal import usage, warning
 
 # Modules included in our package.
 from proc.core import find_processes
+
+NEW_STYLE_SOCKET = '~/.gnupg/S.gpg-agent'
+"""The location of the GPG agent socket for GnuPG 2.1 and newer (a string)."""
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -219,35 +224,71 @@ def find_gpg_agent_info():
     the expected value of ``$GPG_AGENT_INFO``.
     """
     logger.debug("Searching for running GPG agent ..")
+    new_style_socket = parse_path(NEW_STYLE_SOCKET)
     our_uid = os.getuid()
     for process in find_processes():
         if process.exe_name == 'gpg-agent':
             logger.debug("Found GPG agent with PID %i, checking user id .. ", process.pid)
             if process.user_ids.real == our_uid:
-                logger.debug("GPG agent user id matches ours! Using `lsof' to determine socket ..")
-                # A quick lsof tutorial :-)
-                #  -F enables output that is easy to parse,
-                #  -p lists the open files of a specific PID,
-                #  -a combines -p and -U using AND instead of OR,
-                #  -U lists only UNIX domain socket files.
-                output = execute('lsof', '-F', '-p', str(process.pid), '-a', '-U', capture=True, check=False)
-                for line in output.splitlines():
-                    if line and line[0] == 'n':
-                        filename = line[1:]
-                        if filename:
-                            logger.debug("UNIX domain socket reported by lsof: %s", filename)
-                            if os.access(filename, os.W_OK):
-                                # We will now reconstruct $GPG_AGENT_INFO based on the
-                                # information that we've gathered. We should end up with
-                                # an expression like `/tmp/gpg-KE5ZZL/S.gpg-agent:2407:1'.
-                                agent_info = ':'.join([filename, str(process.pid), '1'])
-                                logger.debug("Reconstructed $GPG_AGENT_INFO: %s", agent_info)
-                                return agent_info
-                            else:
-                                logger.debug("No write access to socket, ignoring process %i.", process.pid)
+                socket_file = None
+                logger.debug("GPG agent user id matches ours! Looking for UNIX socket ..")
+                if validate_unix_socket(new_style_socket):
+                    logger.debug("Found GnuPG >= 2.1 compatible socket: %s", new_style_socket)
+                    socket_file = new_style_socket
+                else:
+                    logger.debug("Using `lsof' to find open UNIX sockets ..")
+                    for filename in find_open_unix_sockets(process.pid):
+                        logger.debug("UNIX domain socket reported by lsof: %s", filename)
+                        if validate_unix_socket(filename, os.W_OK):
+                            socket_file = filename
+                            break
+                # We will now reconstruct $GPG_AGENT_INFO based on the
+                # information that we've gathered. We should end up with
+                # an expression like `/tmp/gpg-KE5ZZL/S.gpg-agent:2407:1'.
+                if socket_file:
+                    agent_info = ':'.join([socket_file, str(process.pid), '1'])
+                    logger.debug("Reconstructed $GPG_AGENT_INFO: %s", agent_info)
+                    return agent_info
             else:
                 logger.debug("GPG agent user id (%i) doesn't match ours (%i), ignoring process %i.",
                              process.user_ids.real, our_uid, process.pid)
+
+
+def find_open_unix_sockets(pid):
+    """
+    Find the pathnames of any UNIX sockets held open by a process.
+
+    :param pid: The process ID (a number).
+    :returns: A generator of pathnames (strings).
+    """
+    # A quick lsof tutorial :-)
+    #  -F enables output that is easy to parse,
+    #  -p lists the open files of a specific PID,
+    #  -a combines -p and -U using AND instead of OR,
+    #  -U lists only UNIX domain socket files.
+    output = execute('lsof', '-F', '-p', str(pid), '-a', '-U', capture=True, check=False, silent=True)
+    for line in output.splitlines():
+        if line and line[0] == 'n':
+            filename = line[1:]
+            if filename:
+                yield filename
+
+
+def validate_unix_socket(pathname):
+    """
+    Check whether a filename points to a writable UNIX socket.
+
+    :param pathname: The pathname of the socket file (a string).
+    :returns: :data:`True` if the socket exists and is writable,
+              :data:`False` in all other cases.
+    """
+    try:
+        metadata = os.stat(pathname)
+        if stat.S_ISSOCK(metadata.st_mode):
+            return os.access(pathname, os.W_OK)
+    except Exception:
+        pass
+    return False
 
 
 def start_gpg_agent():
