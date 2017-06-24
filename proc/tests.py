@@ -14,20 +14,16 @@ import operator
 import os
 import random
 import subprocess
-import sys
 import time
-import unittest
 
 from pprint import pformat
 
 # External dependencies.
-import coloredlogs
 from executor import ExternalCommand, which
 from executor.contexts import AbstractContext
 from humanfriendly import parse_size, Timer
 from humanfriendly.compat import basestring
-from humanfriendly.testing import CustomSearchPath, MockedProgram
-from humanfriendly.text import compact
+from humanfriendly.testing import CustomSearchPath, MockedProgram, TestCase
 
 # Modules included in our package.
 from proc.apache import find_apache_memory_usage, StatsList
@@ -42,48 +38,9 @@ from proc.unix import UnixProcess
 logger = logging.getLogger(__name__)
 
 
-def setUpModule():
-    """
-    Prepare the test suite.
+class ProcTestCase(TestCase):
 
-    Sets up verbose logging to the terminal. When a test fails the logging
-    output can help to perform a post-mortem analysis of the failure in
-    question (even when its hard to reproduce locally). This is especially
-    useful when debugging remote test failures, whether they happened on Travis
-    CI or a user's local system.
-    """
-    coloredlogs.install(level='DEBUG')
-
-
-class ProcTestCase(unittest.TestCase):
-
-    """
-    :mod:`unittest` compatible container for the test suite of `proc`.
-    """
-
-    def setUp(self):
-        """Reset the logging level before every test runs."""
-        coloredlogs.set_level('DEBUG')
-        # Separate the name of the test method (printed by the superclass
-        # and/or py.test without a newline at the end) from the first line of
-        # logging output that the test method is likely going to generate.
-        sys.stderr.write("\n")
-
-    def skipTest(self, text, *args, **kw):
-        """
-        Enable backwards compatible "marking of tests to skip".
-
-        By calling this method from a return statement in the test to be
-        skipped the test can be marked as skipped when possible, without
-        breaking the test suite when unittest.TestCase.skipTest() isn't
-        available.
-        """
-        reason = compact(text, *args, **kw)
-        try:
-            super(ProcTestCase, self).skipTest(reason)
-        except AttributeError:
-            # unittest.TestCase.skipTest() isn't available in Python 2.6.
-            logger.warning("%s", reason)
+    """:mod:`unittest` compatible container for the test suite of `proc`."""
 
     def test_uid_to_name(self):
         """Make sure :func:`uid_to_name()` never raises exceptions."""
