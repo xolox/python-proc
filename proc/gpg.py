@@ -239,7 +239,7 @@ def find_gpg_agent_info():
                     logger.debug("Using `lsof' to find open UNIX sockets ..")
                     for filename in find_open_unix_sockets(process.pid):
                         logger.debug("UNIX domain socket reported by lsof: %s", filename)
-                        if validate_unix_socket(filename, os.W_OK):
+                        if validate_unix_socket(filename):
                             socket_file = filename
                             break
                 # We will now reconstruct $GPG_AGENT_INFO based on the
