@@ -84,12 +84,20 @@ import sys
 # External dependencies.
 import coloredlogs
 from executor import ExternalCommandFailed, execute, which
-from humanfriendly import parse_path
+from humanfriendly import Spinner, Timer, parse_path
 from humanfriendly.terminal import usage, warning
 from verboselogs import VerboseLogger
 
 # Modules included in our package.
 from proc.core import find_processes
+
+LAUNCH_TIMEOUT = 30
+"""
+The timeout for a newly launched GPG agent daemon to come online (a number).
+
+This gives the maximum number of seconds to wait for a newly launched GPG agent
+daemon to come online.
+"""
 
 NEW_STYLE_SOCKET = '~/.gnupg/S.gpg-agent'
 """The location of the GPG agent socket for GnuPG 2.1 and newer (a string)."""
@@ -169,15 +177,21 @@ def parse_arguments(arguments):
         sys.exit(1)
 
 
-def enable_gpg_agent():
-    """Update :data:`os.environ` with the variables collected by :func:`get_gpg_variables()`."""
-    os.environ.update(get_gpg_variables())
+def enable_gpg_agent(**options):
+    """
+    Update :data:`os.environ` with the variables collected by :func:`get_gpg_variables()`.
+
+    :param options: Optional keyword arguments for :func:`get_gpg_variables()`.
+    """
+    os.environ.update(get_gpg_variables(**options))
 
 
-def get_gpg_variables():
+def get_gpg_variables(timeout=LAUNCH_TIMEOUT):
     """
     Prepare the environment variable(s) required by the gpg_ program.
 
+    :param timeout: The timeout for a newly launched GPG agent daemon to
+                    start (a number, defaults to :data:`LAUNCH_TIMEOUT`).
     :returns: A dictionary with environment variables.
 
     This function tries to figure out the correct values of two
@@ -197,11 +211,9 @@ def get_gpg_variables():
         logger.debug("Preparing $GPG_AGENT_INFO variable ..")
         gpg_agent_info = find_gpg_agent_info()
         if not gpg_agent_info:
+            # Start a new GPG agent daemon.
             logger.debug("No running GPG agent found, trying to spawn new one ..")
-            start_gpg_agent()
-            gpg_agent_info = find_gpg_agent_info()
-            if not gpg_agent_info:
-                logger.warning("Failed to locate spawned GPG agent!")
+            gpg_agent_info = start_gpg_agent(timeout=timeout)
         if gpg_agent_info:
             environment['GPG_AGENT_INFO'] = gpg_agent_info
     else:
@@ -304,7 +316,23 @@ def validate_unix_socket(pathname):
     return False
 
 
-def start_gpg_agent():
-    """Start a new gpg-agent daemon in the background."""
+def start_gpg_agent(timeout=LAUNCH_TIMEOUT):
+    """
+    Start a new gpg-agent daemon in the background.
+
+    :param timeout: The timeout for the newly launched GPG agent daemon to
+                    start (a number, defaults to :data:`LAUNCH_TIMEOUT`).
+    :returns: The return value of :func:`find_gpg_agent_info()`.
+    """
+    timer = Timer()
     logger.info("Starting a new GPG agent daemon ..")
-    execute('gpg-agent', '--daemon', silent=True)
+    execute('gpg-agent', '--daemon', async=True, silent=True)
+    with Spinner(timer=timer) as spinner:
+        while timer.elapsed_time < LAUNCH_TIMEOUT:
+            gpg_agent_info = find_gpg_agent_info()
+            if gpg_agent_info:
+                logger.debug("Waited %s for GPG agent daemon to start.", timer)
+                return gpg_agent_info
+            spinner.step(label="Waiting for GPG agent daemon")
+            spinner.sleep()
+    logger.warning("Failed to locate spawned GPG agent! (waited for %s)", timer)
