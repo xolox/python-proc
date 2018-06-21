@@ -248,7 +248,8 @@ def find_gpg_agent_info():
     for process in find_processes():
         if process.exe_name == 'gpg-agent':
             logger.debug("Found GPG agent with PID %i, checking user id .. ", process.pid)
-            if process.user_ids.real == our_uid:
+            their_uid = process.user_ids.real if process.user_ids else 'unknown'
+            if their_uid == our_uid:
                 socket_file = None
                 logger.debug("GPG agent user id matches ours! Looking for UNIX socket ..")
                 if validate_unix_socket(new_style_socket):
@@ -269,8 +270,8 @@ def find_gpg_agent_info():
                     logger.debug("Reconstructed $GPG_AGENT_INFO: %s", agent_info)
                     return agent_info
             else:
-                logger.debug("GPG agent user id (%i) doesn't match ours (%i), ignoring process %i.",
-                             process.user_ids.real, our_uid, process.pid)
+                logger.debug("GPG agent user id (%s) doesn't match ours (%i), ignoring process %i.",
+                             their_uid, our_uid, process.pid)
 
 
 def find_open_unix_sockets(pid):
