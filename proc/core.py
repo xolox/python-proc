@@ -280,9 +280,27 @@ class Process(UnixProcess):
 
     @property
     def cwd(self):
-        """The working directory of the process (a string or :data:`None`)."""
+        """
+        The working directory of the process (a string or :data:`None`).
+
+        **Availability:**
+
+        - This property is constructed by dereferencing the symbolic link
+          ``/proc/[pid]/cwd`` each time the property is referenced (because the
+          working directory may change at any time).
+
+        - If this property is referenced after the process has ended then it's
+          too late to dereference the symbolic link and an empty string is
+          returned.
+
+        - If an exception is encountered while dereferencing the symbolic link
+          (for example because you don't have permission to dereference the
+          symbolic link) the exception is swallowed and an empty string is
+          returned.
+        """
         with ProtectedAccess('cwd', "dereference working directory"):
             return os.readlink(os.path.join(self.proc_tree, 'cwd'))
+        return ''
 
     @lazy_property
     def environ(self):
