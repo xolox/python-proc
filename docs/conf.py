@@ -3,7 +3,7 @@ Documentation build configuration file for the `proc` package.
 """
 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 14, 2017
+# Last Change: June 21, 2018
 # URL: https://proc.readthedocs.io
 
 import os
@@ -15,7 +15,13 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- General configuration -----------------------------------------------------
 
 # Sphinx extension module names.
-extensions = ['sphinx.ext.doctest', 'sphinx.ext.autodoc', 'sphinx.ext.intersphinx']
+extensions = [
+    'sphinx.ext.doctest',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
+    'humanfriendly.sphinx',
+    'property_manager.sphinx',
+]
 
 # Paths that contain templates, relative to this directory.
 templates_path = ['templates']
