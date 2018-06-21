@@ -243,18 +243,18 @@ def find_gpg_agent_info():
     the expected value of ``$GPG_AGENT_INFO``.
     """
     logger.debug("Searching for running GPG agent ..")
-    new_style_socket = parse_path(NEW_STYLE_SOCKET)
     our_uid = os.getuid()
     for process in find_processes():
         if process.exe_name == 'gpg-agent':
             logger.debug("Found GPG agent with PID %i, checking user id .. ", process.pid)
             their_uid = process.user_ids.real if process.user_ids else 'unknown'
-            if their_uid == our_uid:
+            if our_uid == their_uid:
                 socket_file = None
                 logger.debug("GPG agent user id matches ours! Looking for UNIX socket ..")
-                if validate_unix_socket(new_style_socket):
-                    logger.debug("Found GnuPG >= 2.1 compatible socket: %s", new_style_socket)
-                    socket_file = new_style_socket
+                fixed_socket = find_fixed_agent_socket()
+                if validate_unix_socket(fixed_socket):
+                    logger.debug("Found GnuPG >= 2.1 compatible socket: %s", fixed_socket)
+                    socket_file = fixed_socket
                 else:
                     logger.debug("Using `lsof' to find open UNIX sockets ..")
                     for filename in find_open_unix_sockets(process.pid):
@@ -272,6 +272,27 @@ def find_gpg_agent_info():
             else:
                 logger.debug("GPG agent user id (%s) doesn't match ours (%i), ignoring process %i.",
                              their_uid, our_uid, process.pid)
+
+
+def find_fixed_agent_socket():
+    """
+    Search for a GPG agent UNIX socket in one of the "fixed locations".
+
+    :returns: The pathname of the found socket file (a string) or :data:`None`.
+
+    Two locations are searched, in the given order (the first that is found is
+    returned):
+
+    - Starting from GnuPG 2.1.13 the location ``/run/user/$UID/gnupg/S.gpg-agent``
+      is used (only when the directory ``/run/user/$UID`` exists).
+
+    - GnuPG 2.1 removed the ``$GPG_AGENT_INFO`` related code and switched to
+      the fixed location ``~/.gnupg/S.gpg-agent``.
+    """
+    socket_on_tmpfs = '/run/user/%i/gnupg/S.gpg-agent' % os.getuid()
+    for socket in (socket_on_tmpfs, parse_path(NEW_STYLE_SOCKET)):
+        if os.path.exists(socket):
+            return socket
 
 
 def find_open_unix_sockets(pid):
