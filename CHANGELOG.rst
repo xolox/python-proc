@@ -11,6 +11,13 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 0.16`_ (2018-06-21)
+----------------------------
+
+Expose the value of ``/proc/[pid]/cwd`` on ``Process`` objects.
+
+.. _Release 0.16: https://github.com/xolox/python-proc/compare/0.15...0.16
+
 `Release 0.15`_ (2018-06-21)
 ----------------------------
 
