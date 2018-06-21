@@ -77,16 +77,16 @@ Internal documentation of :mod:`proc.gpg`
 # Standard library modules.
 import functools
 import getopt
-import logging
 import os
 import stat
 import sys
 
 # External dependencies.
 import coloredlogs
-from executor import ExternalCommandFailed, execute
+from executor import ExternalCommandFailed, execute, which
 from humanfriendly import parse_path
 from humanfriendly.terminal import usage, warning
+from verboselogs import VerboseLogger
 
 # Modules included in our package.
 from proc.core import find_processes
@@ -95,7 +95,7 @@ NEW_STYLE_SOCKET = '~/.gnupg/S.gpg-agent'
 """The location of the GPG agent socket for GnuPG 2.1 and newer (a string)."""
 
 # Initialize a logger.
-logger = logging.getLogger(__name__)
+logger = VerboseLogger(__name__)
 
 # Inject our logger into all execute() calls.
 execute = functools.partial(execute, logger=logger)
@@ -193,16 +193,19 @@ def get_gpg_variables():
     """
     environment = {}
     # Try to figure out the correct value of $GPG_AGENT_INFO.
-    logger.debug("Preparing $GPG_AGENT_INFO variable ..")
-    gpg_agent_info = find_gpg_agent_info()
-    if not gpg_agent_info:
-        logger.debug("No running GPG agent found, trying to spawn new one ..")
-        start_gpg_agent()
+    if have_agent_program():
+        logger.debug("Preparing $GPG_AGENT_INFO variable ..")
         gpg_agent_info = find_gpg_agent_info()
         if not gpg_agent_info:
-            logger.warning("Failed to locate spawned GPG agent!")
-    if gpg_agent_info:
-        environment['GPG_AGENT_INFO'] = gpg_agent_info
+            logger.debug("No running GPG agent found, trying to spawn new one ..")
+            start_gpg_agent()
+            gpg_agent_info = find_gpg_agent_info()
+            if not gpg_agent_info:
+                logger.warning("Failed to locate spawned GPG agent!")
+        if gpg_agent_info:
+            environment['GPG_AGENT_INFO'] = gpg_agent_info
+    else:
+        logger.notice("Not using gpg-agent program (it's not installed).")
     # Try to figure out the correct value of $GPG_TTY.
     logger.debug("Preparing $GPG_TTY variable ..")
     gpg_tty = execute('tty', capture=True, check=False, shell=False, tty=True)
@@ -272,6 +275,16 @@ def find_open_unix_sockets(pid):
             filename = line[1:]
             if filename:
                 yield filename
+
+
+def have_agent_program():
+    """
+    Check whether the ``gpg-agent`` program is installed.
+
+    :returns: :data:`True` when the ``gpg-agent`` program is available on the
+               ``$PATH``, :data:`False` otherwise.
+    """
+    return bool(which('gpg-agent'))
 
 
 def validate_unix_socket(pathname):
