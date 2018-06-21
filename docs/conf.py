@@ -53,12 +53,12 @@ add_function_parentheses = True
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-# Refer to the Python standard library.
-# From: http://twistedmatrix.com/trac/ticket/4582.
+# References to external documentation.
 intersphinx_mapping = dict(
-    python=('http://docs.python.org', None),
-    executor=('https://executor.readthedocs.org/en/latest', None),
-    propertymanager=('https://property-manager.readthedocs.org/en/latest', None),
+    python2=('https://docs.python.org/2', None),
+    python3=('https://docs.python.org/3', None),
+    executor=('https://executor.readthedocs.io/en/latest', None),
+    propertymanager=('https://property-manager.readthedocs.io/en/latest', None),
 )
 
 # -- Options for HTML output ---------------------------------------------------
