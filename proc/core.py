@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 13, 2016
+# Last Change: June 21, 2018
 # URL: https://proc.readthedocs.io
 
 """
@@ -277,6 +277,12 @@ class Process(UnixProcess):
         output more human friendly).
         """
         return self.cmdline
+
+    @property
+    def cwd(self):
+        """The working directory of the process (a string or :data:`None`)."""
+        with ProtectedAccess('cwd', "dereference working directory"):
+            return os.readlink(os.path.join(self.proc_tree, 'cwd'))
 
     @lazy_property
     def environ(self):

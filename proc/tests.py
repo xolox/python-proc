@@ -69,6 +69,7 @@ class ProcTestCase(TestCase):
         assert process.pgrp == os.getpgrp(), "Unexpected process group ID!"
         assert process.user_ids.real == os.getuid(), "Unexpected real user ID!"
         assert process.group_ids.real == os.getgid(), "Unexpected real group ID!"
+        assert process.cwd == os.getcwd(), "Unexpected working directory!"
         # The following assertion may fail at some point, but I chose it above
         # using uid_to_name(os.getuid()) because the latter isn't testing
         # anything useful at all ...
