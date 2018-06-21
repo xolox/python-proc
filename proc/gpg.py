@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 24, 2017
+# Last Change: June 21, 2018
 # URL: https://proc.readthedocs.io
 
 """
@@ -293,4 +293,5 @@ def validate_unix_socket(pathname):
 
 def start_gpg_agent():
     """Start a new gpg-agent daemon in the background."""
+    logger.info("Starting a new GPG agent daemon ..")
     execute('gpg-agent', '--daemon', silent=True)
