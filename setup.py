@@ -3,7 +3,7 @@
 # Setup script for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 23, 2017
+# Last Change: June 21, 2018
 # URL: https://proc.readthedocs.io
 
 """
@@ -67,6 +67,7 @@ setup(
     url='https://proc.readthedocs.io',
     author="Peter Odding",
     author_email='peter@peterodding.com',
+    license='MIT',
     packages=find_packages(),
     test_suite='proc.tests',
     install_requires=get_requirements('requirements.txt'),
