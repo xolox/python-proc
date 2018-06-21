@@ -153,7 +153,7 @@ License
 
 This software is licensed under the `MIT license`_.
 
-© 2017 Peter Odding.
+© 2018 Peter Odding.
 
 .. External references:
 .. _cron: http://en.wikipedia.org/wiki/Cron

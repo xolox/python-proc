@@ -27,8 +27,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'proc'
-copyright = u'2017, Peter Odding'
+project = 'proc'
+copyright = '2018, Peter Odding'
 
 # Find the package version and make it the release.
 from proc import __version__ as proc_version
