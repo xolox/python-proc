@@ -11,6 +11,49 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 0.15`_ (2018-06-21)
+----------------------------
+
+- Changes related to the ``proc.gpg`` module and the ``with-gpg-agent`` program:
+
+  - Use existing ``$GPG_AGENT_INFO`` values when available and validated.
+  - Let the operator know when starting a new GPG agent daemon (through logging).
+  - Check if ``gpg-agent`` is installed before trying to run ``gpg-agent --daemon``.
+  - Added support for GPG agent sockets in ``/run/user/$UID`` (GnuPG >= 2.1.13).
+
+    - This incompatibility came to light when I upgraded my laptop from Ubuntu
+      16.04 to 18.04.
+
+  - Fixed hanging Travis CI builds caused by ``gpg-agent --daemon`` not
+    detaching properly when the standard error stream is redirected.
+
+    - This incompatibility was exposed by Travis CI switching from Ubuntu 12.04
+      to 14.04.
+
+  - Fixed race condition in ``find_gpg_agent_info()`` raising ``AttributeError``.
+
+- Changes related to the documentation:
+
+  - Added this change log to the documentation (with a link in the readme).
+  - Integrated the ``property_manager.sphinx`` module (to generate boilerplate
+    documentation).
+  - Fixed intersphinx mapping in documentation configuration.
+  - Changed HTML theme from `default` to `nature` (a wide layout).
+  - Include documentation in source distributions (``MANIFEST.in``).
+
+- And then some miscellaneous changes:
+
+  - Fixed Apache WSGI configuration on Travis CI.
+
+    - This test suite incompatibility was exposed by Travis CI switching from
+      Ubuntu 12.04 to 14.04.
+
+  - Restored Python 2.6 compatibility in the test suite (concerning ``pytest`` version).
+  - Added license=MIT key to ``setup.py`` script.
+  - Bumped the copyright to 2018.
+
+.. _Release 0.15: https://github.com/xolox/python-proc/compare/0.14...0.15
+
 `Release 0.14`_ (2017-06-24)
 ----------------------------
 
@@ -140,7 +183,7 @@ Increase test coverage (somewhat of a cop-out :-).
 `Release 0.8.1`_ (2016-04-21)
 -----------------------------
 
-Now including an upstream bug fix to make the previous release work :-|.
+Now including an upstream bug fix to make the previous release work :-(.
 
 .. _Release 0.8.1: https://github.com/xolox/python-proc/compare/0.8...0.8.1
 
