@@ -23,7 +23,7 @@ sudo apt-get install --yes apache2-mpm-prefork libapache2-mod-wsgi gnupg-agent
 # Create a dummy virtual host that contains the minimal mod_wsgi directives
 # required to cause it to spawn daemon worker processes. Yes, this is a nasty
 # hack, but we really don't need more than this :-).
-sudo tee /etc/apache2/sites-enabled/proc-test-vhost >/dev/null << EOF
+sudo tee /etc/apache2/sites-enabled/proc-test-vhost.conf >/dev/null << EOF
 <VirtualHost *>
   WSGIScriptAlias / /foo/bar/baz/wsgi.py
   WSGIDaemonProcess proc-test processes=4 threads=1 display-name=%{GROUP}

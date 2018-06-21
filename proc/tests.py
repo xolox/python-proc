@@ -1,7 +1,7 @@
 # Automated tests for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 24, 2017
+# Last Change: June 21, 2018
 # URL: https://proc.readthedocs.io
 
 """Test suite for the `proc` package."""
@@ -354,7 +354,7 @@ class ProcTestCase(TestCase):
 
     def test_apache_worker_monitoring(self):
         """Test the :mod:`proc.apache` module."""
-        if not os.path.exists('/etc/apache2/sites-enabled/proc-test-vhost'):
+        if not os.path.exists('/etc/apache2/sites-enabled/proc-test-vhost.conf'):
             return self.skipTest("Apache worker monitoring test disabled except on Travis CI!")
         worker_rss, wsgi_rss = find_apache_memory_usage()
         # Make sure some regular Apache workers were identified.
