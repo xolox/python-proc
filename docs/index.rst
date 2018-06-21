@@ -1,28 +1,34 @@
-Documentation for proc
-======================
+proc: Linux process information interface
+=========================================
 
-Welcome to the online documentation for the Python package `proc`.
+Welcome to the documentation of the Python package `proc` version |release|.
+The following sections are available:
 
-Introduction & usage
---------------------
+.. contents::
+   :local:
+
+User documentation
+------------------
 
 The first part of the documentation is the readme which contains general
-information about the `proc` package and getting started instructions. Here are
-the topics discussed in the readme:
+information about the `proc` package and getting started instructions.
+Here are the topics discussed in the readme:
 
 .. toctree::
-   :maxdepth: 2
-
    readme.rst
 
 API documentation
 -----------------
 
-The second part of the documentation is the API documentation, based on version
-|release| of the `proc` package. Here are the contents of the API
-documentation:
+The following API documentation is automatically generated from the source code:
 
 .. toctree::
-   :maxdepth: 2
-
    api.rst
+
+Change log
+----------
+
+The change log lists notable changes to the project:
+
+.. toctree::
+   changelog.rst

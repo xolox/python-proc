@@ -144,9 +144,9 @@ Contact
 -------
 
 The latest version of `proc` is available on PyPI_ and GitHub_. The
-documentation is hosted on `Read the Docs`_. For bug reports please create an
-issue on GitHub_. If you have questions, suggestions, etc. feel free to send me
-an e-mail at `peter@peterodding.com`_.
+documentation is hosted on `Read the Docs`_ and includes a changelog_. For bug
+reports please create an issue on GitHub_. If you have questions, suggestions,
+etc. feel free to send me an e-mail at `peter@peterodding.com`_.
 
 License
 -------
@@ -156,6 +156,7 @@ This software is licensed under the `MIT license`_.
 © 2018 Peter Odding.
 
 .. External references:
+.. _changelog: https://proc.readthedocs.io/en/latest/changelog.html
 .. _cron: http://en.wikipedia.org/wiki/Cron
 .. _documentation: https://proc.readthedocs.io
 .. _GitHub: https://github.com/xolox/python-proc
