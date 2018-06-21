@@ -207,17 +207,21 @@ def get_gpg_variables(timeout=LAUNCH_TIMEOUT):
     """
     environment = {}
     # Try to figure out the correct value of $GPG_AGENT_INFO.
-    if have_agent_program():
-        logger.debug("Preparing $GPG_AGENT_INFO variable ..")
+    logger.debug("Preparing $GPG_AGENT_INFO variable ..")
+    if have_valid_agent_info():
+        logger.debug("Using existing value of $GPG_AGENT_INFO ..")
+        environment['GPG_AGENT_INFO'] = os.environ['GPG_AGENT_INFO']
+    else:
         gpg_agent_info = find_gpg_agent_info()
         if not gpg_agent_info:
-            # Start a new GPG agent daemon.
-            logger.debug("No running GPG agent found, trying to spawn new one ..")
-            gpg_agent_info = start_gpg_agent(timeout=timeout)
+            # Start a new GPG agent daemon?
+            if have_agent_program():
+                logger.debug("No running GPG agent found, trying to spawn new one ..")
+                gpg_agent_info = start_gpg_agent(timeout=timeout)
+            else:
+                logger.notice("Not using gpg-agent program (it's not installed).")
         if gpg_agent_info:
             environment['GPG_AGENT_INFO'] = gpg_agent_info
-    else:
-        logger.notice("Not using gpg-agent program (it's not installed).")
     # Try to figure out the correct value of $GPG_TTY.
     logger.debug("Preparing $GPG_TTY variable ..")
     gpg_tty = execute('tty', capture=True, check=False, shell=False, tty=True)
@@ -297,6 +301,21 @@ def have_agent_program():
                ``$PATH``, :data:`False` otherwise.
     """
     return bool(which('gpg-agent'))
+
+
+def have_valid_agent_info():
+    """
+    Check if the existing ``$GPG_AGENT_INFO`` value is usable.
+
+    :returns: :data:`True` if the existing ``$GPG_AGENT_INFO`` is valid,
+              :data:`False` otherwise.
+
+    This function parses the ``$GPG_AGENT_INFO`` environment
+    variable and validates the resulting UNIX socket filename
+    using :func:`validate_unix_socket()``.
+    """
+    components = os.environ.get('GPG_AGENT_INFO', '').split(':')
+    return components and validate_unix_socket(components[0])
 
 
 def validate_unix_socket(pathname):
