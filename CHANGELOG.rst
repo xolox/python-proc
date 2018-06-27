@@ -11,6 +11,13 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 0.17`_ (2018-06-27)
+----------------------------
+
+Added ``with-gui-environment`` program (a generalization of ``notify-send-headless``).
+
+.. _Release 0.17: https://github.com/xolox/python-proc/compare/0.16...0.17
+
 `Release 0.16`_ (2018-06-21)
 ----------------------------
 
