@@ -1,22 +1,35 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 24, 2017
+# Last Change: June 27, 2018
 # URL: https://proc.readthedocs.io
 
 """
 The :mod:`proc.notify` module implements a headless notify-send_ program.
 
+.. contents::
+   :local:
+
+Introduction to notify-send
+---------------------------
+
 The notify-send program can be used to send desktop notifications to the user
 from the command line. It's great for use in otherwise non-interactive programs
 to unobtrusively inform the user about something, for example I use it to show
-a notification when a system backup is starting and when it has completed.
+a notification when a system backup is starting and when it has completed (see
+my rsync-system-backup_ package).
+
+Problems using notify-send
+--------------------------
 
 One problem is that notify-send needs access to a few environment variables
 from the desktop session in order to deliver its message. The values of these
 environment variables change every time a desktop session is started. This
 complicates the use of notify-send from e.g. system daemons and `cron jobs`_
 (say for an automated backup solution :-).
+
+The notify-send-headless program
+--------------------------------
 
 This module builds on top of the :mod:`proc.core` module as a trivial (but
 already useful :-) example of how the `proc` package can be used to search
@@ -27,8 +40,22 @@ the command line as ``notify-send-headless`` (which accepts the same arguments
 as ``notify-send``). Given super-user privileges this should work fine out of
 the box on any Linux system.
 
+The with-gui-environment program
+--------------------------------
+
+This module also implements the ``with-gui-environment`` program which uses the
+same algorithm as ``notify-send-headless`` to identify the desktop session but
+instead of running the notify-send command it can execute arbitrary commands.
+
+My personal use case for the ``with-gui-environment`` program is to execute
+programs like xrandr_ in my desktop session from custom udev_ rules (which by
+default run commands as root, disconnected from the desktop session).
+
 .. _cron jobs: http://unix.stackexchange.com/q/111188
 .. _notify-send: http://manpages.debian.org/cgi-bin/man.cgi?query=notify-send
+.. _rsync-system-backup: https://rsync-system-backup.readthedocs.io/
+.. _udev: https://en.wikipedia.org/wiki/Udev
+.. _xrandr: https://manpages.debian.org/xrandr
 """
 
 # Standard library modules.
@@ -57,6 +84,14 @@ def main():
     coloredlogs.install(syslog=True)
     context = find_graphical_context()
     context.execute('notify-send', *sys.argv[1:])
+
+
+def with_gui_environment():
+    """Command line interface for ``with-gui-environment``."""
+    coloredlogs.install(syslog=True)
+    context = find_graphical_context()
+    command = context.execute(*sys.argv[1:], check=False)
+    sys.exit(command.returncode)
 
 
 def notify_desktop(body, summary=None, **options):

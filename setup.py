@@ -3,7 +3,7 @@
 # Setup script for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 21, 2018
+# Last Change: June 27, 2018
 # URL: https://proc.readthedocs.io
 
 """
@@ -75,6 +75,7 @@ setup(
         'cron-graceful = proc.cron:main',
         'notify-send-headless = proc.notify:main',
         'with-gpg-agent = proc.gpg:main',
+        'with-gui-environment = proc.notify:with_gui_environment',
     ]),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
