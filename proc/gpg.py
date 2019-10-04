@@ -367,7 +367,7 @@ def start_gpg_agent(timeout=LAUNCH_TIMEOUT):
     """
     timer = Timer()
     logger.info("Starting a new GPG agent daemon ..")
-    execute('gpg-agent', '--daemon', async=True, silent=True)
+    execute('gpg-agent', '--daemon', asynchronous=True, silent=True)
     with Spinner(timer=timer) as spinner:
         while timer.elapsed_time < LAUNCH_TIMEOUT:
             gpg_agent_info = find_gpg_agent_info()
