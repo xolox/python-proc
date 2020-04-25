@@ -18,7 +18,13 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -qq
 
 # Use apt-get to install the Apache webserver, mod_wsgi and the GnuPG agent.
-sudo apt-get install --yes apache2-mpm-prefork libapache2-mod-wsgi gnupg-agent
+sudo apt-get install --yes libapache2-mod-wsgi gnupg-agent
+
+# Enable the Apache prefork MPM.
+sudo a2dismod --maintmode --quiet mpm_event
+sudo a2dismod --maintmode --quiet mpm_worker
+sudo a2enmod --maintmode --quiet mpm_prefork
+sudo service apache2 restart
 
 # Create a dummy virtual host that contains the minimal mod_wsgi directives
 # required to cause it to spawn daemon worker processes. Yes, this is a nasty
