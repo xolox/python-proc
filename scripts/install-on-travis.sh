@@ -18,7 +18,7 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -qq
 
 # Use apt-get to install the Apache webserver, mod_wsgi and the GnuPG agent.
-sudo apt-get install --yes libapache2-mod-wsgi gnupg-agent
+sudo apt-get install --yes apache2 libapache2-mod-wsgi gnupg-agent
 
 # Enable the Apache prefork MPM.
 sudo a2dismod --maintmode --quiet mpm_event
