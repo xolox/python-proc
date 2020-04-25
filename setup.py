@@ -3,7 +3,7 @@
 # Setup script for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 27, 2018
+# Last Change: April 25, 2020
 # URL: https://proc.readthedocs.io
 
 """
@@ -87,10 +87,8 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
