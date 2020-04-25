@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 21, 2018
+# Last Change: April 26, 2020
 # URL: https://proc.readthedocs.io
 
 """
@@ -84,8 +84,9 @@ import sys
 # External dependencies.
 import coloredlogs
 from executor import ExternalCommandFailed, execute, which
-from humanfriendly import Spinner, Timer, parse_path
+from humanfriendly import Timer, parse_path
 from humanfriendly.terminal import usage, warning
+from humanfriendly.terminal.spinners import Spinner
 from verboselogs import VerboseLogger
 
 # Modules included in our package.
