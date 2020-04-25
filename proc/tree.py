@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 10, 2015
+# Last Change: April 26, 2020
 # URL: https://proc.readthedocs.io
 
 """
@@ -37,6 +37,9 @@ from property_manager import lazy_property, writable_property
 
 # Modules provided by our package.
 from proc.core import find_processes, Process
+
+# Public identifiers that require documentation.
+__all__ = ('ProcessNode', 'get_process_tree', 'logger')
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

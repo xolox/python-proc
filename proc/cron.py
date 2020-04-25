@@ -101,6 +101,22 @@ from humanfriendly.text import concatenate, pluralize
 from proc.core import sorted_by_pid
 from proc.tree import get_process_tree
 
+# Public identifiers that require documentation.
+__all__ = (
+    'ADDITIONS_SCRIPT_NAME',
+    'CronDaemonNotRunning',
+    'USAGE_TEXT',
+    'cron_graceful',
+    'ensure_root_privileges',
+    'find_cron_daemon',
+    'logger',
+    'main',
+    'parse_arguments',
+    'run_additions',
+    'terminate_cron_daemon',
+    'wait_for_processes',
+)
+
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 

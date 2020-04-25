@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 14, 2017
+# Last Change: April 26, 2020
 # URL: https://proc.readthedocs.io
 
 """
@@ -35,6 +35,16 @@ import re
 
 # External dependencies.
 from proc.tree import get_process_tree, ProcessNode
+
+# Public identifiers that require documentation.
+__all__ = (
+    'ApacheDaemonNotRunning',
+    'MaybeApacheWorker',
+    'StatsList',
+    'find_apache_memory_usage',
+    'find_apache_workers',
+    'logger',
+)
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

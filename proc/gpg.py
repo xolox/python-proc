@@ -92,6 +92,26 @@ from verboselogs import VerboseLogger
 # Modules included in our package.
 from proc.core import find_processes
 
+# Public identifiers that require documentation.
+__all__ = (
+    'LAUNCH_TIMEOUT',
+    'NEW_STYLE_SOCKET',
+    'USAGE_TEXT',
+    'enable_gpg_agent',
+    'find_fixed_agent_socket',
+    'find_gpg_agent_info',
+    'find_open_unix_sockets',
+    'get_gpg_variables',
+    'have_agent_program',
+    'have_valid_agent_info',
+    'logger',
+    'main',
+    'parse_arguments',
+    'start_gpg_agent',
+    'validate_unix_socket',
+    'with_gpg_agent',
+)
+
 LAUNCH_TIMEOUT = 30
 """
 The timeout for a newly launched GPG agent daemon to come online (a number).

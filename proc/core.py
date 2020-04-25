@@ -33,6 +33,22 @@ from proc.unix import UnixProcess
 from property_manager import lazy_property
 from humanfriendly.deprecation import define_aliases
 
+# Public identifiers that require documentation.
+__all__ = (
+    'NUM_RACE_CONDITIONS',
+    'OwnerIDs',
+    'Process',
+    'ProtectedAccess',
+    'find_processes',
+    'find_system_uptime',
+    'gid_to_name',
+    'logger',
+    'parse_process_cmdline',
+    'parse_process_status',
+    'sorted_by_pid',
+    'uid_to_name',
+)
+
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 

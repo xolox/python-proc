@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 27, 2018
+# Last Change: April 26, 2020
 # URL: https://proc.readthedocs.io
 
 """
@@ -71,6 +71,16 @@ from executor.contexts import LocalContext
 
 # Modules included in our package.
 from proc.core import find_processes
+
+# Public identifiers that require documentation.
+__all__ = (
+    'REQUIRED_VARIABLES',
+    'find_graphical_context',
+    'logger',
+    'main',
+    'notify_desktop',
+    'with_gui_environment',
+)
 
 REQUIRED_VARIABLES = 'DBUS_SESSION_BUS_ADDRESS', 'DISPLAY', 'XAUTHORITY'
 """The names of environment variables required by ``notify-send`` (a tuple of strings)."""

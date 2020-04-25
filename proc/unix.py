@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2016
+# Last Change: April 26, 2020
 # URL: https://proc.readthedocs.io
 
 """
@@ -29,6 +29,9 @@ import signal
 # External dependencies.
 from executor.process import ControllableProcess
 from property_manager import required_property
+
+# Public identifiers that require documentation.
+__all__ = ('UnixProcess', 'logger')
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
