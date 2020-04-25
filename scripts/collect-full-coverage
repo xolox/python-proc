@@ -10,6 +10,13 @@
 #
 #  - The proc.apache module requires root privileges to identify WSGI workers,
 #    again because of the proc.core.Process.exe property.
+#
+# This script previously used 'pytest --cov --cov-append' and for some time
+# things "just worked" however as of 2020 that technique no longer works so
+# this script has been changed to explicitly merge the two coverage files.
+
+COVERAGE_ROOT=coverage-as-super-user
+COVERAGE_USER=coverage-as-regular-user
 
 # Try to kill any running gpg-agents, to give the test suite the chance to spawn a new one.
 killall gpg-agent &>/dev/null || true
@@ -17,14 +24,26 @@ killall gpg-agent &>/dev/null || true
 # First we run the test suite as a regular user.
 py.test --cov
 
+# Move the coverage file out of the way.
+mv .coverage $COVERAGE_USER
+
 # Again we try to kill any running gpg-agents to give the test suite the chance to spawn a new one.
 sudo killall gpg-agent &>/dev/null || true
 
 # Then we run the test suite with root privileges.
-sudo $(which py.test) --cov --cov-append
+sudo $(which py.test) --cov
 
 # Restore the ownership of the coverage data.
 sudo chown $USER:$USER .coverage
+
+# Merge the coverage files of the two runs.
+mv .coverage $COVERAGE_ROOT
+coverage combine $COVERAGE_ROOT $COVERAGE_USER
+
+# Make it clear why coverage is reported three times.
+echo
+echo "Merged coverage results:" >&2
+echo
 
 # Report the coverage statistics to the terminal
 # and fail if the coverage drops below 90%.
