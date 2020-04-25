@@ -3,7 +3,7 @@ Documentation build configuration file for the `proc` package.
 """
 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 25, 2020
+# Last Change: April 26, 2020
 # URL: https://proc.readthedocs.io
 
 import os
@@ -64,6 +64,7 @@ intersphinx_mapping = dict(
     python2=('https://docs.python.org/2', None),
     python3=('https://docs.python.org/3', None),
     executor=('https://executor.readthedocs.io/en/latest', None),
+    humanfriendly=('https://humanfriendly.readthedocs.io/en/latest', None),
     propertymanager=('https://property-manager.readthedocs.io/en/latest', None),
 )
 

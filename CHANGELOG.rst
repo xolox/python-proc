@@ -21,18 +21,19 @@ Added ``with-gui-environment`` program (a generalization of ``notify-send-headle
 `Release 0.16`_ (2018-06-21)
 ----------------------------
 
-Expose the value of ``/proc/[pid]/cwd`` on ``Process`` objects.
+Expose the value of ``/proc/[pid]/cwd`` on :class:`.Process` objects as the new
+:attr:`.Process.cwd` property.
 
 .. _Release 0.16: https://github.com/xolox/python-proc/compare/0.15...0.16
 
 `Release 0.15`_ (2018-06-21)
 ----------------------------
 
-- Changes related to the ``proc.gpg`` module and the ``with-gpg-agent`` program:
+- Changes related to the :mod:`proc.gpg` module and the ``with-gpg-agent`` program:
 
   - Use existing ``$GPG_AGENT_INFO`` values when available and validated.
   - Let the operator know when starting a new GPG agent daemon (through logging).
-  - Check if ``gpg-agent`` is installed before trying to run ``gpg-agent --daemon``.
+  - Check if :man:`gpg-agent`` is installed before trying to run ``gpg-agent --daemon``.
   - Added support for GPG agent sockets in ``/run/user/$UID`` (GnuPG >= 2.1.13).
 
     - This incompatibility came to light when I upgraded my laptop from Ubuntu
@@ -44,13 +45,14 @@ Expose the value of ``/proc/[pid]/cwd`` on ``Process`` objects.
     - This incompatibility was exposed by Travis CI switching from Ubuntu 12.04
       to 14.04.
 
-  - Fixed race condition in ``find_gpg_agent_info()`` raising ``AttributeError``.
+  - Fixed race condition in :func:`.find_gpg_agent_info()` raising
+    :exc:`~exceptions.AttributeError`.
 
 - Changes related to the documentation:
 
   - Added this change log to the documentation (with a link in the readme).
-  - Integrated the ``property_manager.sphinx`` module (to generate boilerplate
-    documentation).
+  - Integrated the :mod:`property_manager.sphinx` module (to generate
+    boilerplate documentation).
   - Fixed intersphinx mapping in documentation configuration.
   - Changed HTML theme from `default` to `nature` (a wide layout).
   - Include documentation in source distributions (``MANIFEST.in``).
@@ -62,7 +64,8 @@ Expose the value of ``/proc/[pid]/cwd`` on ``Process`` objects.
     - This test suite incompatibility was exposed by Travis CI switching from
       Ubuntu 12.04 to 14.04.
 
-  - Restored Python 2.6 compatibility in the test suite (concerning ``pytest`` version).
+  - Restored Python 2.6 compatibility in the test suite (concerning
+    :pypi:`pytest` version).
   - Added license=MIT key to ``setup.py`` script.
   - Bumped the copyright to 2018.
 
@@ -71,7 +74,7 @@ Expose the value of ``/proc/[pid]/cwd`` on ``Process`` objects.
 `Release 0.14`_ (2017-06-24)
 ----------------------------
 
-Swallow exceptions in the ``notify_desktop()`` function.
+Swallow exceptions in the :func:`.notify_desktop()` function.
 
 This change is technically backwards incompatible but I consider it the more
 sane behavior; I had just simply never seen ``notify-send`` fail until the
@@ -85,7 +88,7 @@ failure which prompted this release 😇.
 - Provide proper compatibility with GnuPG  >= 2.1 which uses the fixed
   location ``~/.gnupg/S.gpg-agent`` for the agent socket.
 - Bug fix for systemd incompatibility in test suite.
-- Moved test helpers to the ``humanfriendly.testing`` module.
+- Moved test helpers to the :mod:`humanfriendly.testing` module.
 
 .. _Release 0.13: https://github.com/xolox/python-proc/compare/0.12...0.13
 
@@ -135,8 +138,8 @@ rendering on the Python Package Index).
 Silenced another race condition (``ESRCH`` instead of ``ENOENT``).
 
 This is one of those things that you only observe after running a package like
-`proc` from a periodic task (cron job) that runs every minute on a dozen
-servers for a couple of weeks :-). The error condition was -correctly- being
+:pypi:`proc` from a periodic task (cron job) that runs every minute on a dozen
+servers for a couple of weeks 🙂. The error condition was -correctly- being
 swallowed already, but it was more noisy than it needed to be.
 
 .. _Release 0.9.1: https://github.com/xolox/python-proc/compare/0.9...0.9.1
@@ -144,11 +147,11 @@ swallowed already, but it was more noisy than it needed to be.
 `Release 0.9`_ (2016-06-01)
 ---------------------------
 
-Refactored the separation of concerns between the executor_ and proc_ packages.
+Refactored the separation of concerns between the :pypi:`executor` and :pypi:`proc` packages.
 
 Please refer to the commit message of the other side of this refactoring
 (`executor#b484912bb33`_) for details about the how and why of this fairly
-involved refactoring :-).
+involved refactoring 🙂.
 
 .. _Release 0.9: https://github.com/xolox/python-proc/compare/0.8.5...0.9
 .. _executor#b484912bb33: https://github.com/xolox/python-executor/commit/b484912bb33
@@ -160,7 +163,7 @@ involved refactoring :-).
 
   Reasoning: Race condition log messages are so frequent that they become
   noise, drowning out other more important log messages, so I decided to make
-  them less noisy :-).
+  them less noisy 🙂.
 
 - Fixed a confusing typo in the API docs, left over from a sentence that was
   (half) reformulated.
@@ -190,7 +193,7 @@ involved refactoring :-).
 `Release 0.8.2`_ (2016-04-21)
 -----------------------------
 
-Increase test coverage (somewhat of a cop-out :-).
+Increase test coverage (somewhat of a cop-out 🙂).
 
 .. _Release 0.8.2: https://github.com/xolox/python-proc/compare/0.8.1...0.8.2
 
@@ -220,11 +223,13 @@ Expose the real user/group names of processes.
 `Release 0.6`_ (2016-01-28)
 ---------------------------
 
-- Expose ``/proc/[pid]/status`` (UID/GID information considered useful :-).
-- Changed ``Process.from_pid()`` to use ``Process.from_path()``.
-- Re-ordered fields of ``Process`` class alphabetically.
-- Switched to flake8 for code style checks, fixed code style warnings pointed out by flake8.
-- Updated ``tox.ini`` to include ``py35`` and pytest / flake8 options.
+- Expose ``/proc/[pid]/status`` (UID/GID information considered useful 🙂).
+- Changed :meth:`.Process.from_pid()` to use :meth:`.Process.from_path()`.
+- Re-ordered fields of :class:`.Process` class alphabetically.
+- Switched to :pypi:`flake8` for code style checks, fixed code style warnings
+  pointed out by flake8.
+- Updated ``tox.ini`` to include ``py35`` and options for :pypi:`flake8` and
+  :pypi:`pytest`.
 - Improved test coverage.
 - Refactored the makefile.
 
@@ -243,7 +248,7 @@ calling convention).
 
 - Extracted ``/proc/uptime`` parsing to a separate function.
 - Generalized error handling (of permission errors and race conditions).
-- Expose ``/proc/[pid]/environ`` (also: ``notify-send-headless`` :-).
+- Expose ``/proc/[pid]/environ`` (also: ``notify-send-headless`` 🙂).
 
 .. _Release 0.5: https://github.com/xolox/python-proc/compare/0.4.1...0.5
 
@@ -252,9 +257,9 @@ calling convention).
 
 Two minor bug fixes:
 
-- Added a ``Process.command_line`` to ``Process.cmdline`` alias (to improve the
-  compatibility with the process management code that's shared between the
-  executor_ and proc_ packages).
+- Added a :attr:`.Process.command_line` to :attr:`.Process.cmdline` alias (to
+  improve the compatibility with the process management code that's shared
+  between the :pypi:`executor` and :pypi:`proc` packages).
 
 - Improved the documentation after refactorings in the 0.4 release broke some
   references.
@@ -264,21 +269,19 @@ Two minor bug fixes:
 `Release 0.4`_ (2015-11-10)
 ---------------------------
 
-- Improved process management (shared between the executor_ and proc_ packages).
-- Switched from cached-property_ to property-manager_.
+- Improved process management (shared between the :pypi:`executor` and
+  :pypi:`proc` packages).
+
+- Switched from :pypi:`cached-property` to :pypi:`property-manager`.
 
 .. _Release 0.4: https://github.com/xolox/python-proc/compare/0.3...0.4
-.. _executor: https://pypi.org/project/executor/
-.. _proc: https://pypi.org/project/proc/
-.. _cached-property: https://pypi.org/project/cached-property/
-.. _property-manager: https://pypi.org/project/property-manager/
 
 `Release 0.3`_ (2015-09-25)
 ---------------------------
 
 Make the ``cron-graceful`` command "repeatable" (as in, running it twice will
-not report a ``CronDaemonNotRunning`` exception to the terminal but will just
-mention that cron is not running and then exit gracefully).
+not report a :exc:`.CronDaemonNotRunning` exception to the terminal but will
+just mention that :man:`cron` is not running and then exit gracefully).
 
 .. _Release 0.3: https://github.com/xolox/python-proc/compare/0.2.3...0.3
 
@@ -295,7 +298,7 @@ mention that cron is not running and then exit gracefully).
 `Release 0.2.2`_ (2015-06-26)
 -----------------------------
 
-Bug fix: Avoid ``KeyError`` exception during tree construction.
+Bug fix: Avoid :exc:`~exceptions.KeyError` exception during tree construction.
 
 .. _Release 0.2.2: https://github.com/xolox/python-proc/compare/0.2.1...0.2.2
 
@@ -310,7 +313,7 @@ Bug fix: Avoid ``KeyError`` exception during tree construction.
 `Release 0.2`_ (2015-03-30)
 ---------------------------
 
-- Added an example ``proc.apache`` module that monitors Apache worker memory usage.
+- Added an example :mod:`proc.apache` module that monitors Apache worker memory usage.
 - Made the test suite more robust and increased test coverage.
 
 .. _Release 0.2: https://github.com/xolox/python-proc/compare/0.1.1...0.2
@@ -318,7 +321,7 @@ Bug fix: Avoid ``KeyError`` exception during tree construction.
 `Release 0.1.1`_ (2015-03-30)
 -----------------------------
 
-- Enable callers to override object type for ``proc.tree.get_process_tree()``.
+- Enable callers to override object type for :func:`proc.tree.get_process_tree()`.
 - Started documenting similar projects in the readme.
 
 .. _Release 0.1.1: https://github.com/xolox/python-proc/compare/0.1...0.1.1
@@ -330,7 +333,7 @@ This was the initial commit and release. The "History" section of the readme
 provides a bit more context:
 
 I've been writing shell and Python scripts that parse ``/proc`` for years now
-(it seems so temptingly easy when you get started ;-). Sometimes I resorted to
+(it seems so temptingly easy when you get started 😉). Sometimes I resorted to
 copy/pasting snippets of Python code between personal and work projects because
 the code was basically done, just not available in an easy to share form.
 
@@ -339,7 +342,7 @@ time to combine all of the features I'd grown to appreciate into a single well
 tested and well documented Python package with an easy to use API and share it
 with the world.
 
-This means that, although I made my first commit on the `proc` package in March
-2015, much of its code has existed for years in various forms.
+This means that, although I made my first commit on the :pypi:`proc` package in
+March 2015, much of its code has existed for years in various forms.
 
 .. _Release 0.1: https://github.com/xolox/python-proc/tree/0.1

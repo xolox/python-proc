@@ -335,7 +335,7 @@ def have_valid_agent_info():
 
     This function parses the ``$GPG_AGENT_INFO`` environment
     variable and validates the resulting UNIX socket filename
-    using :func:`validate_unix_socket()``.
+    using :func:`validate_unix_socket()`.
     """
     components = os.environ.get('GPG_AGENT_INFO', '').split(':')
     return components and validate_unix_socket(components[0])

@@ -1,7 +1,7 @@
 # proc: Simple interface to Linux process information.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 21, 2018
+# Last Change: April 26, 2020
 # URL: https://proc.readthedocs.io
 
 """
@@ -31,14 +31,18 @@ import time
 from executor import which
 from proc.unix import UnixProcess
 from property_manager import lazy_property
+from humanfriendly.deprecation import define_aliases
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
-# Global counters to track the number of detected race conditions. This is only
-# useful for the test suite, because I want the test suite to create race
-# conditions and verify that they are properly handled.
-num_race_conditions = dict(cmdline=0, environ=0, exe=0, stat=0, status=0)
+NUM_RACE_CONDITIONS = dict(cmdline=0, environ=0, exe=0, stat=0, status=0)
+"""
+A dictionary with string keys and integer values that's used to keep global
+counters that track the number of detected race conditions. This is only useful
+for the test suite, because it intentionally creates race conditions to verify
+that they are properly handled.
+"""
 
 
 class Process(UnixProcess):
@@ -458,8 +462,8 @@ class Process(UnixProcess):
 
         See also :func:`~proc.unix.UnixProcess.suspend()`,
         :func:`~proc.unix.UnixProcess.resume()`,
-        :func:`~executor.process.ControllableProcess.terminate()` and
-        :func:`~executor.process.ControllableProcess.kill()`.
+        :meth:`~executor.process.ControllableProcess.terminate()` and
+        :meth:`~executor.process.ControllableProcess.kill()`.
         """
         stat_fields = parse_process_status(self.proc_tree, silent=True)
         return bool(stat_fields and stat_fields[2] != 'Z')
@@ -856,7 +860,7 @@ class ProtectedAccess(object):
         """
         Initialize a :class:`ProtectedAccess` object.
 
-        :param key: The key in :data:`num_race_conditions` (a string).
+        :param key: The key in :data:`NUM_RACE_CONDITIONS` (a string).
         :param action: A verb followed by a noun describing what kind of access
                        is being protected (a string)
         """
@@ -884,9 +888,17 @@ class ProtectedAccess(object):
                     #  - ESRCH is reported when /proc/[pid]/stat disappears.
                     logger.debug("Failed to %s due to race condition! (%s)",
                                  self.action, filename)
-                    num_race_conditions[self.key] += 1
+                    NUM_RACE_CONDITIONS[self.key] += 1
                     return True
             # Other exceptions are logged and swallowed.
             logger.warning("Failed to %s because of unexpected exception! (%s)",
                            self.action, filename, exc_info=(exc_type, exc_value, traceback))
         return True
+
+
+# Define aliases for backwards compatibility.
+define_aliases(
+    module_name=__name__,
+    # In proc 1.0 the following module variable was renamed.
+    num_race_conditions='proc.core.NUM_RACE_CONDITIONS',
+)
