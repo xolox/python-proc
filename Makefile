@@ -1,7 +1,7 @@
 # Makefile for the `proc' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 25, 2020
+# Last Change: April 26, 2020
 # URL: https://github.com/xolox/python-proc
 
 PACKAGE_NAME = proc
@@ -61,7 +61,7 @@ full-coverage: install
 
 docs: install
 	@pip install --quiet sphinx
-	@cd docs && sphinx-build -nb html -d build/doctrees . build/html
+	@cd docs && sphinx-build -nWb html -d build/doctrees . build/html
 
 publish: install
 	@git push origin && git push --tags origin
