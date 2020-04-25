@@ -9,7 +9,7 @@ proc: Linux process information interface
 
 The Python package `proc` exposes process information available in the Linux
 `process information pseudo-file system`_ available at ``/proc``. The `proc`
-package is currently tested on cPython 2.7, 3.5 and PyPy (2.7). The automated
+package is currently tested on cPython 2.7, 3.5+ and PyPy (2.7). The automated
 test suite regularly runs on Ubuntu Linux but other Linux variants (also those
 not based on Debian Linux) should work fine. For usage instructions please
 refer to the documentation_.
