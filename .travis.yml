@@ -9,12 +9,8 @@ python:
 before_install:
   - scripts/install-on-travis.sh
 install:
-  - pip install pip-accel
-  - pip-accel install coveralls
-  - pip-accel install --requirement=requirements.txt
-  - pip-accel install --requirement=requirements-checks.txt
-  - pip-accel install --requirement=requirements-tests.txt
-  - LC_ALL=C pip-accel install .
+  - pip install --requirement=requirements-travis.txt
+  - LC_ALL=C pip install .
 script:
   - make check
   - make full-coverage
