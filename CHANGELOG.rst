@@ -11,6 +11,33 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 1.0`_ (2020-04-26)
+---------------------------
+
+- Merged `pull request #2`_ which enables Python 3.7+ compatibility by changing
+  the :pypi:`executor` integration to stop using the old ``async`` option and
+  start using the new ``asynchronous`` option (given that :keyword:`async`
+  became a keyword in Python 3.7).
+
+- Updated Python compatibility:
+
+  - Python 3.6, 3.7 and 3.8 are now tested and supported.
+  - Python 2.6 and 3.4 are no longer supported.
+
+- Defined ``__all__`` for existing Python modules.
+
+- Fixed :pypi:`humanfriendly` deprecation warnings and bumped dependencies that
+  went through the same process.
+
+- Fixed all :pypi:`Sphinx` broken references and configured Sphinx to report
+  broken references as errors instead of warnings (to prevent broken references
+  from piling up in the future).
+
+- Various Travis CI fixes that didn't affect published code.
+
+.. _Release 1.0: https://github.com/xolox/python-proc/compare/0.17...1.0
+.. _pull request #2: https://github.com/xolox/python-proc/pull/2
+
 `Release 0.17`_ (2018-06-27)
 ----------------------------
 
